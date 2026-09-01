@@ -6,6 +6,11 @@ History
 Unreleased
 ----------
 
+* Added support for translations deployment. Now it is possible to switch url scheme to
+  `/<language>/<version>/<filename>` mode (A.K.A "translations") instead of original
+  `/<version>/<filename>` (A.K.A "no-translations") using the ``--url-version-scheme`` CLI option
+  (defaulting to "no-translations" mode for backward compatibility) and ``url_version_scheme`` configuration key in
+  ``docs_versions_menu_conf``.
 * Fixed a white scrollbar-gutter bar showing on the right edge of the expanded
   versions menu with the ``sphinx_rtd_theme``
 

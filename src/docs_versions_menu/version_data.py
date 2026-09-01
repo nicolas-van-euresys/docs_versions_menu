@@ -8,10 +8,12 @@ import jinja2
 
 from .folder_spec import resolve_folder_spec
 from .groups import get_groups
+from .url_scheme import UrlVersionScheme
 
 
 def get_version_data(
     *,
+    url_version_scheme: UrlVersionScheme,
     suffix_latest,
     default_branch_spec,
     versions_spec,
@@ -78,6 +80,8 @@ def get_version_data(
     versions = resolve_folder_spec(versions_spec, groups)
     versions = list(reversed(versions))  # newest first
     version_data = {
+        # URL version scheme: 'no-translations' or 'translations'
+        'url_version_scheme': str(url_version_scheme),
         # list of *all* folders
         'folders': folders,
         #

@@ -7,6 +7,8 @@ from pathlib import Path
 
 from sphinx.util.template import SphinxRenderer
 
+from .url_scheme import UrlVersionScheme
+
 
 class _JS(str):
     """Javascript code wrapper.
@@ -47,6 +49,7 @@ def add_versions_menu_js_file(app):
         github_project_url=None,
         badge_only=(app.config.html_theme != 'sphinx_rtd_theme'),
         menu_title="Docs",
+        url_version_scheme='no-translations',
     )
     if app.config.doctr_versions_menu_conf:
         print(
@@ -58,6 +61,10 @@ def add_versions_menu_js_file(app):
     context.update(app.config.docs_versions_menu_conf)
     if context['github_project_url'] is None:
         context['github_project_url'] = _JS('null')
+    UrlVersionScheme.parse(context['url_version_scheme'])  # checks validity
+    context['url_version_scheme'] = _JS(
+        "'" + context['url_version_scheme'] + "'"
+    )
     js_file_path = Path(tmpdir) / js_file_name
     template = renderer.env.get_template(template_name)
     print(

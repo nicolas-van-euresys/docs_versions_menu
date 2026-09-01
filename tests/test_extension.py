@@ -75,3 +75,18 @@ def test_custom(app, status, warning):
         in js
     )
     assert "var menu_title = 'Docs'" in js
+
+
+@pytest.mark.sphinx('html', testroot='translations')
+def test_multi_languages(app, status, warning):
+    """Test building documentation with translations URL scheme.
+
+    This tests that the url_version_scheme configuration is properly passed
+    to the JavaScript template.
+    """
+    app.build()
+    _build = Path(app.outdir)
+    assert (_build / 'index.html').is_file()
+    assert (_build / '_static' / 'docs-versions-menu.js').is_file()
+    js = (_build / '_static' / 'docs-versions-menu.js').read_text()
+    assert "url_version_scheme = 'translations'" in js

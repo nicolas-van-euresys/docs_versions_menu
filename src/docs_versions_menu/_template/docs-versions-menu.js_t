@@ -26,8 +26,29 @@ async function getRootUrl() {
   }
 }
 
+const url_version_scheme = {{ url_version_scheme }};
+
 async function getCurrentVersionFolder(rootUrl) {
-  return window.location.href.substring(rootUrl.length + 1).split("/")[0];
+  const path = window.location.href.substring(rootUrl.length + 1).split("/");
+  if (url_version_scheme === 'translations') {
+    return path[1];
+  }
+  return path[0];
+}
+
+function getCurrentLanguage(rootUrl) {
+  const path = window.location.href.substring(rootUrl.length + 1).split("/");
+  if (url_version_scheme === 'translations') {
+    return path[0];
+  }
+  return null;
+}
+
+function buildVersionUrl(rootUrl, language, version, currentPath) {
+  if (url_version_scheme === 'translations' && language) {
+    return rootUrl + '/' + language + '/' + version + '/' + currentPath;
+  }
+  return rootUrl + '/' + version + '/' + currentPath;
 }
 
 function getGithubProjectUrl(rootUrl) {
@@ -47,6 +68,14 @@ async function _addVersionsMenu(version_data, rootUrl) {
   const current_folder = await getCurrentVersionFolder(rootUrl);
   if (!current_folder || !(current_folder in version_data["labels"])) return;
   const current_version = version_data["labels"][current_folder];
+  const current_language = getCurrentLanguage(rootUrl);
+  const pathSegments = window.location.href.substring(rootUrl.length + 1).split("/");
+  let currentPath = '';
+  if (url_version_scheme === 'translations') {
+    currentPath = pathSegments.slice(2).join("/");
+  } else {
+    currentPath = pathSegments.slice(1).join("/");
+  }
   const menu = document.createElement('div');
   {%- if badge_only %}
   menu.setAttribute('class', 'rst-versions rst-badge');
@@ -74,7 +103,7 @@ async function _addVersionsMenu(version_data, rootUrl) {
                        + "'>" + current_version + "</a></dd></strong>";
     } else {
       inner_html += "<dd><a href='"
-                       + current_url.replace(current_folder, folder)
+                       + buildVersionUrl(rootUrl, current_language, folder, currentPath)
                        + "'>" + version_data["labels"][folder] + "</a></dd>";
     }
   }
@@ -132,7 +161,7 @@ async function _addVersionsMenu(version_data, rootUrl) {
   if (warning !== undefined){
     if (version_data["latest"] !== null){
       msg = msg + " Documentation is available for the " + "<a href='" +
-        current_url.replace(current_folder, version_data["latest"]) +
+        buildVersionUrl(rootUrl, current_language, version_data["latest"], currentPath) +
         "'>latest public release</a>."
     }
     warning.innerHTML = "<p class='first admonition-title'>Note</p> " +

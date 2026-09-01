@@ -13,6 +13,7 @@ from pathlib import Path
 import click
 import jinja2
 
+from .url_scheme import UrlVersionScheme
 from .version_data import get_version_data
 
 __all__ = []
@@ -141,6 +142,19 @@ class DoctrLegacyCommand(click.Command):
     help='File to which to write json data',
     metavar='OUTFILE',
     type=click.Path(),
+    show_default=True,
+    show_envvar=True,
+)
+@click.option(
+    '--url-version-scheme',
+    default='no-translations',
+    type=click.Choice(['no-translations', 'translations']),
+    help=(
+        'The URL scheme for versioned documentation. '
+        '"no-translations" uses /<version>/<filename>. '
+        '"translations" uses /<language>/<version>/<filename> '
+        '(Read the Docs style).'
+    ),
     show_default=True,
     show_envvar=True,
 )
@@ -294,6 +308,7 @@ class DoctrLegacyCommand(click.Command):
 def main(
     debug,
     outfile,
+    url_version_scheme,
     versions,
     default_branch,
     latest,
@@ -343,6 +358,7 @@ def main(
         raise click.Abort()
     warnings = OrderedDict([(name.lower(), spec) for (name, spec) in warning])
     version_data = get_version_data(
+        url_version_scheme=UrlVersionScheme.parse(url_version_scheme),
         downloads_file=(downloads_file or None),  # False (in config) → None
         default_branch_spec=default_branch,
         suffix_latest=suffix_latest,

@@ -222,6 +222,7 @@ def test_many_releases(caplog):
         with (cwd / 'versions.json').open() as versions_json:
             versions_data = json.load(versions_json)
             assert versions_data == {
+                'url_version_scheme': 'no-translations',
                 'downloads': {
                     'doc-testing': [],
                     'master': [
@@ -472,6 +473,7 @@ def test_custom_envvars(caplog):
         with (cwd / 'versions.json').open() as versions_json:
             versions_data = json.load(versions_json)
             assert versions_data == {
+                'url_version_scheme': 'no-translations',
                 'downloads': {
                     'doc-testing': [],
                     'master': [],
@@ -557,6 +559,7 @@ def test_custom_labels_warnings(caplog):
         'DOCS_VERSIONS_MENU_LABEL': "<releases>: {{ folder | replace('v', '', 1) }}; doc-testing: doc; master: {{ folder }} (latest dev branch)",
     }
     expected_versions_data = {
+        'url_version_scheme': 'no-translations',
         'downloads': {
             'doc-testing': [],
             'master': [],
@@ -681,3 +684,104 @@ def test_custom_labels_warnings(caplog):
         with (cwd / 'versions.json').open() as versions_json:
             versions_data = json.load(versions_json)
             assert versions_data == expected_versions_data
+
+
+# ============================================================================
+# Tests for translations URL version scheme
+# ============================================================================
+
+
+def test_default_run_multi_languages(caplog):
+    """Test docs-versions-menu with translations URL scheme."""
+    root = Path(__file__).with_suffix('') / 'gh_pages_default'
+    runner = CliRunner()
+    caplog.set_level(logging.DEBUG)
+    with runner.isolated_filesystem():
+        cwd = Path.cwd()
+        subprocess.run(['git', 'init'], check=True)
+        copy_tree(str(root), str(cwd))
+        result = runner.invoke(
+            docs_versions_menu_command,
+            ['--url-version-scheme=translations'],
+        )
+        assert result.exit_code == 0
+        with (cwd / 'versions.json').open() as versions_json:
+            versions_data = json.load(versions_json)
+            assert versions_data['url_version_scheme'] == 'translations'
+            assert versions_data['folders'] == ['main', 'v0.1.0', 'v1.0.0']
+            assert versions_data['versions'] == ['main', 'v1.0.0', 'v0.1.0']
+            assert versions_data['latest'] == 'v1.0.0'
+
+
+def test_multi_languages_via_envvar(caplog):
+    """Test translations scheme via environment variable."""
+    root = Path(__file__).with_suffix('') / 'gh_pages_default'
+    env = {
+        'DOCS_VERSIONS_MENU_URL_VERSION_SCHEME': 'translations',
+        'DOCS_VERSIONS_MENU_WRITE_VERSIONS_PY': 'false',
+        'DOCS_VERSIONS_MENU_WRITE_INDEX_HTML': 'false',
+        'DOCS_VERSIONS_MENU_ENSURE_NO_JEKYLL': 'false',
+    }
+    runner = CliRunner()
+    caplog.set_level(logging.DEBUG)
+    env_orig = os.environ.copy()
+    with runner.isolated_filesystem():
+        cwd = Path.cwd()
+        subprocess.run(['git', 'init'], check=True)
+        copy_tree(str(root), str(cwd))
+        result = runner.invoke(docs_versions_menu_command, env=env)
+        assert result.exit_code == 0
+        with (cwd / 'versions.json').open() as versions_json:
+            versions_data = json.load(versions_json)
+            assert versions_data['url_version_scheme'] == 'translations'
+    os.environ = env_orig
+
+
+def test_multi_languages_many_releases(caplog):
+    """Test translations mode with many releases."""
+    root = Path(__file__).with_suffix('') / 'gh_pages_many_releases'
+    runner = CliRunner()
+    caplog.set_level(logging.DEBUG)
+    with runner.isolated_filesystem():
+        cwd = Path.cwd()
+        subprocess.run(['git', 'init'], check=True)
+        copy_tree(str(root), str(cwd))
+        result = runner.invoke(
+            docs_versions_menu_command,
+            ['--url-version-scheme=translations'],
+        )
+        assert result.exit_code == 0
+        with (cwd / 'versions.json').open() as versions_json:
+            versions_data = json.load(versions_json)
+            assert versions_data['url_version_scheme'] == 'translations'
+            assert versions_data['folders'] == [
+                'doc-testing',
+                'master',
+                'testing',
+                'v0.1.0',
+                'v0.2.0',
+                'v1.0.0',
+                'v1.0.0+dev',
+                'v1.0.0-dev0',
+                'v1.0.0-post1',
+                'v1.0.0-rc1',
+                'v1.1.0-rc1',
+            ]
+            assert versions_data['latest'] == 'v1.0.0-post1'
+            assert versions_data['default-branch'] == 'master'
+
+
+def test_invalid_url_version_scheme():
+    """Test that invalid URL version scheme raises an error."""
+    root = Path(__file__).with_suffix('') / 'gh_pages_default'
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        cwd = Path.cwd()
+        subprocess.run(['git', 'init'], check=True)
+        copy_tree(str(root), str(cwd))
+        result = runner.invoke(
+            docs_versions_menu_command,
+            ['--url-version-scheme=invalid'],
+        )
+        assert result.exit_code != 0
+        assert 'Invalid value' in result.output
