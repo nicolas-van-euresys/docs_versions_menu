@@ -81,8 +81,8 @@ def test_custom(app, status, warning):
 def test_multi_languages(app, status, warning):
     """Test building documentation with translations URL scheme.
 
-    This tests that the url_version_scheme configuration is properly passed
-    to the JavaScript template.
+    This tests that the url_version_scheme and default_language configuration
+    is properly passed to the JavaScript template.
     """
     app.build()
     _build = Path(app.outdir)
@@ -90,3 +90,7 @@ def test_multi_languages(app, status, warning):
     assert (_build / '_static' / 'docs-versions-menu.js').is_file()
     js = (_build / '_static' / 'docs-versions-menu.js').read_text()
     assert "url_version_scheme = 'translations'" in js
+    assert "default_language = 'en'" in js
+    # Check that the language switcher code is present
+    assert 'findFallbackLanguage' in js
+    assert 'Translations' in js

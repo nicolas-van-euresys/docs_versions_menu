@@ -32,8 +32,16 @@ def write_versions_json(version_data, outfile, quiet=False):
     subprocess.run(['git', 'add', outfile], check=False)
 
 
-def _write_index_html(version_data):
-    """Write an index.html that redirects to `default_folder`."""
+def _write_index_html(
+    url_version_scheme: UrlVersionScheme, version_data, default_language='en'
+):
+    """Write index.html files that redirect to the best available version.
+
+    In no-translations mode, writes a single index.html at the root.
+    In translations mode, writes:
+    - Root index.html -> redirects to default_language/latest_version
+    - Per-language index.html -> redirects to that language's best version
+    """
     logger = logging.getLogger(__name__)
     logger.debug("Write index.html")
     template_file = Path("index.html_t")
@@ -44,9 +52,91 @@ def _write_index_html(version_data):
         logger.debug("Using default index.html template")
     template_str = template_file.read_text()
     template = jinja2.Environment().from_string(template_str)
-    with open("index.html", "w") as out_fh:
-        out_fh.write(template.render(dict(version_data=version_data)))
-    subprocess.run(['git', 'add', 'index.html'], check=False)
+
+    match url_version_scheme:
+        case UrlVersionScheme.NO_TRANSLATIONS:
+            with open("index.html", "w") as out_fh:
+                out_fh.write(template.render(dict(version_data=version_data)))
+            subprocess.run(['git', 'add', 'index.html'], check=False)
+
+        case UrlVersionScheme.TRANSLATIONS:
+            languages = sorted(
+                {
+                    lang
+                    for langs in version_data.get(
+                        'available_languages', {}
+                    ).values()
+                    for lang in langs
+                }
+            )
+            latest = version_data.get('latest')
+            versions = version_data.get('versions', [])
+            available = version_data.get('available_languages', {})
+
+            def _best_for_lang(lang):
+                if latest and lang in available.get(latest, []):
+                    return latest
+                for v in versions:
+                    if lang in available.get(v, []):
+                        return v
+                return None
+
+            def _target(lang):
+                best = _best_for_lang(lang)
+                if best:
+                    return lang + '/' + best
+                fallback = _best_for_lang(default_language)
+                if fallback:
+                    return default_language + '/' + fallback
+                return None
+
+            # Root index.html
+            root_target = _target(default_language)
+            if root_target:
+                with open("index.html", "w") as out_fh:
+                    out_fh.write(
+                        template.render(
+                            dict(
+                                version_data={
+                                    'latest': root_target,
+                                    'default-branch': None,
+                                    'folders': [root_target],
+                                }
+                            )
+                        )
+                    )
+                subprocess.run(['git', 'add', 'index.html'], check=False)
+                logger.debug("Root index.html redirects to %s", root_target)
+
+            # Per-language index.html files
+            for lang in languages:
+                target = _target(lang)
+                if target:
+                    lang_dir = Path(lang)
+                    lang_dir.mkdir(exist_ok=True)
+                    version_name = target.split('/')[1]
+                    with open(str(lang_dir / 'index.html'), "w") as out_fh:
+                        out_fh.write(
+                            template.render(
+                                dict(
+                                    version_data={
+                                        'latest': version_name,
+                                        'default-branch': None,
+                                        'folders': [version_name],
+                                    }
+                                )
+                            )
+                        )
+                    subprocess.run(
+                        ['git', 'add', str(lang_dir / 'index.html')],
+                        check=False,
+                    )
+                    logger.debug(
+                        "Language %s index.html redirects to %s", lang, target
+                    )
+
+        case _:
+            raise NotImplementedError()
 
 
 def _write_versions_py():
@@ -305,6 +395,19 @@ class DoctrLegacyCommand(click.Command):
     show_default=True,
     show_envvar=True,
 )
+@click.option(
+    '--default-language',
+    default='en',
+    metavar='LANG',
+    help=(
+        'The default language code for translations mode. Used by the root '
+        'index.html redirect and by the JavaScript menu for fallback when '
+        'switching to a version that does not exist in the current language. '
+        'Has no effect in no-translations mode.'
+    ),
+    show_default=True,
+    show_envvar=True,
+)
 def main(
     debug,
     outfile,
@@ -320,6 +423,7 @@ def main(
     downloads_file,
     no_downloads_file,
     suffix_latest,
+    default_language,
 ):
     """Generate versions json file in OUTFILE.
 
@@ -357,8 +461,9 @@ def main(
         )
         raise click.Abort()
     warnings = OrderedDict([(name.lower(), spec) for (name, spec) in warning])
+    url_version_scheme = UrlVersionScheme.parse(url_version_scheme)
     version_data = get_version_data(
-        url_version_scheme=UrlVersionScheme.parse(url_version_scheme),
+        url_version_scheme=url_version_scheme,
         downloads_file=(downloads_file or None),  # False (in config) → None
         default_branch_spec=default_branch,
         suffix_latest=suffix_latest,
@@ -366,9 +471,14 @@ def main(
         latest_spec=latest,
         warnings=warnings,
         label_specs=label,
+        default_language=default_language,
     )
     if write_index_html:
-        _write_index_html(version_data=version_data)
+        _write_index_html(
+            url_version_scheme=url_version_scheme,
+            version_data=version_data,
+            default_language=default_language,
+        )
     if write_versions_py:
         _write_versions_py()
     if ensure_no_jekyll:

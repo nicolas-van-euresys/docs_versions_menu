@@ -50,6 +50,7 @@ def add_versions_menu_js_file(app):
         badge_only=(app.config.html_theme != 'sphinx_rtd_theme'),
         menu_title="Docs",
         url_version_scheme='no-translations',
+        default_language='en',
     )
     if app.config.doctr_versions_menu_conf:
         print(
@@ -64,6 +65,9 @@ def add_versions_menu_js_file(app):
     UrlVersionScheme.parse(context['url_version_scheme'])  # checks validity
     context['url_version_scheme'] = _JS(
         "'" + context['url_version_scheme'] + "'"
+    )
+    context['default_language'] = _JS(
+        "'" + str(context.get('default_language', 'en')) + "'"
     )
     js_file_path = Path(tmpdir) / js_file_name
     template = renderer.env.get_template(template_name)

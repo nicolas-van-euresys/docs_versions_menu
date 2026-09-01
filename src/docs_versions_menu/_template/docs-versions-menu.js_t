@@ -14,7 +14,6 @@ async function urlExists(url) {
 }
 
 async function getRootUrl() {
-  // Walk up the URL path until we find a versions.json, works on any host.
   const loc = new URL(window.location.href);
   let path = loc.pathname.replace(/\/[^/]*$/, '');
   while (true) {
@@ -27,32 +26,43 @@ async function getRootUrl() {
 }
 
 const url_version_scheme = {{ url_version_scheme }};
+const default_language = {{ default_language }};
 
-async function getCurrentVersionFolder(rootUrl) {
-  const path = window.location.href.substring(rootUrl.length + 1).split("/");
-  if (url_version_scheme === 'translations') {
-    return path[1];
-  }
-  return path[0];
+function pathParts(rootUrl) {
+  return window.location.href.substring(rootUrl.length + 1).split("/");
+}
+
+function getCurrentVersionFolder(rootUrl) {
+  const parts = pathParts(rootUrl);
+  return url_version_scheme === 'translations' ? parts[1] : parts[0];
 }
 
 function getCurrentLanguage(rootUrl) {
-  const path = window.location.href.substring(rootUrl.length + 1).split("/");
-  if (url_version_scheme === 'translations') {
-    return path[0];
-  }
-  return null;
+  const parts = pathParts(rootUrl);
+  return url_version_scheme === 'translations' ? parts[0] : null;
 }
 
-function buildVersionUrl(rootUrl, language, version, currentPath) {
-  if (url_version_scheme === 'translations' && language) {
-    return rootUrl + '/' + language + '/' + version + '/' + currentPath;
+function buildUrl(rootUrl, lang, version, path) {
+  if (url_version_scheme === 'translations' && lang) {
+    return rootUrl + '/' + lang + '/' + version + (path ? '/' + path : '');
   }
-  return rootUrl + '/' + version + '/' + currentPath;
+  return rootUrl + '/' + version + (path ? '/' + path : '');
+}
+
+function availableLanguagesFor(version, availableLanguages) {
+  if (!availableLanguages || !availableLanguages[version]) {
+    return [];
+  }
+  return availableLanguages[version];
+}
+
+function findFallbackLanguage(availableLanguages, version, preferred) {
+  const langs = availableLanguagesFor(version, availableLanguages);
+  if (langs.indexOf(preferred) >= 0) return preferred;
+  return langs[0] || default_language;
 }
 
 function getGithubProjectUrl(rootUrl) {
-  // Auto-detect GitHub project URL from a github.io root URL.
   const match = rootUrl.match(/([\w\d-]+)\.github\.io\/([\w\d-]+)/);
   if (match !== null) {
     return "https://github.com/" + match[1] + "/" + match[2];
@@ -61,21 +71,16 @@ function getGithubProjectUrl(rootUrl) {
 }
 
 async function _addVersionsMenu(version_data, rootUrl) {
-  // The menu was reverse-engineered from the RTD websites, so it's very
-  // specific to the sphinx_rtd_theme
   const folders = version_data["versions"];
   const current_url = document.URL;
   const current_folder = await getCurrentVersionFolder(rootUrl);
   if (!current_folder || !(current_folder in version_data["labels"])) return;
   const current_version = version_data["labels"][current_folder];
   const current_language = getCurrentLanguage(rootUrl);
-  const pathSegments = window.location.href.substring(rootUrl.length + 1).split("/");
-  let currentPath = '';
-  if (url_version_scheme === 'translations') {
-    currentPath = pathSegments.slice(2).join("/");
-  } else {
-    currentPath = pathSegments.slice(1).join("/");
-  }
+  const parts = pathParts(rootUrl);
+  const currentPath = url_version_scheme === 'translations'
+    ? parts.slice(2).join("/")
+    : parts.slice(1).join("/");
   const menu = document.createElement('div');
   {%- if badge_only %}
   menu.setAttribute('class', 'rst-versions rst-badge');
@@ -96,21 +101,44 @@ async function _addVersionsMenu(version_data, rootUrl) {
       "<div class='injected'>" +
         "<dl>" +
           "<dt>Versions</dt>";
+  const availLangs = version_data["available_languages"] || {};
   for (const folder of folders) {
     if (folder === current_folder){
       inner_html += "<strong><dd><a href='"
                        + current_url
                        + "'>" + current_version + "</a></dd></strong>";
     } else {
+      const targetLang = url_version_scheme === 'translations'
+        ? findFallbackLanguage(availLangs, folder, current_language)
+        : current_language;
       inner_html += "<dd><a href='"
-                       + buildVersionUrl(rootUrl, current_language, folder, currentPath)
+                       + buildUrl(rootUrl, targetLang, folder, currentPath)
                        + "'>" + version_data["labels"][folder] + "</a></dd>";
     }
   }
-  const downloads = version_data["downloads"][current_folder];
+
+  // Languages section (translations mode only)
+  if (url_version_scheme === 'translations') {
+    const langs = availableLanguagesFor(current_folder, availLangs);
+    if (langs.length > 0) {
+      inner_html += "<dt>Translations</dt>";
+      for (const lang of langs) {
+        if (lang === current_language) {
+          inner_html += "<strong><dd><a href='"
+                           + current_url
+                           + "'>" + lang + "</a></dd></strong>";
+        } else {
+          inner_html += "<dd><a href='"
+                           + buildUrl(rootUrl, lang, current_folder, currentPath)
+                           + "'>" + lang + "</a></dd>";
+        }
+      }
+    }
+  }
+
+  const downloads = version_data["downloads"][current_folder] || [];
   if (downloads.length > 0){
-    inner_html +=
-          "<dt>Downloads</dt>";
+    inner_html += "<dt>Downloads</dt>";
     for (const download of downloads) {
       const download_label = download[0];
       let download_url = download[1];
@@ -142,7 +170,6 @@ async function _addVersionsMenu(version_data, rootUrl) {
   const parent = document.body;
   parent.insertBefore(menu, parent.lastChild);
 
-  // Add a warning banner for dev/outdated versions
   let warning;
   let msg;
   if (version_data["warnings"][current_folder].indexOf("outdated") >=0){
@@ -160,8 +187,11 @@ async function _addVersionsMenu(version_data, rootUrl) {
   }
   if (warning !== undefined){
     if (version_data["latest"] !== null){
+      const latestLang = url_version_scheme === 'translations'
+         ? findFallbackLanguage(availLangs, version_data["latest"], current_language)
+        : current_language;
       msg = msg + " Documentation is available for the " + "<a href='" +
-        buildVersionUrl(rootUrl, current_language, version_data["latest"], currentPath) +
+        buildUrl(rootUrl, latestLang, version_data["latest"], currentPath) +
         "'>latest public release</a>."
     }
     warning.innerHTML = "<p class='first admonition-title'>Note</p> " +
@@ -171,7 +201,6 @@ async function _addVersionsMenu(version_data, rootUrl) {
       || document.body;
     warn_parent.insertBefore(warning, warn_parent.firstChild);
   }
-
 }
 
 async function addVersionsMenu() {
