@@ -62,13 +62,13 @@ The settings for the Sphinx extensions are taken from a dict
 
 The dict may contain the following keys:
 
-* ``github_project_url`` (str): The full URL to the project on Github, e.g. ``"https://github.com/user/project"``. When set, the menu shows links to the project home and issue tracker. Defaults to ``None`` (no Github links shown).
-* ``badge_only`` (bool): Whether to render the version menu as a "badge" in the lower right corner (defaults to True unless :confval:`html_theme` is ``"sphinx_rtd_theme"``)
-* ``menu_title`` (str): The label to be shown in to left corner of the full versions menu (if not ``badge_only``). Defaults to "Docs".
 * ``url_version_scheme`` (str): Either ``"no-translations"`` (default) or ``"translations"``, selecting the URL scheme
   used for versioned (and, in the latter case, multi-language) documentation, see :ref:`translations`. This must be set
   to the same value as the ``docs-versions-menu`` command's
   :option:`--url-version-scheme <docs-versions-menu --url-version-scheme>` option.
+* ``github_project_url`` (str): The full URL to the project on Github, e.g. ``"https://github.com/user/project"``. When set, the menu shows links to the project home and issue tracker. Defaults to ``None`` (no Github links shown).
+* ``badge_only`` (bool): Whether to render the version menu as a "badge" in the lower right corner (defaults to True unless :confval:`html_theme` is ``"sphinx_rtd_theme"``)
+* ``menu_title`` (str): The label to be shown in to left corner of the full versions menu (if not ``badge_only``). Defaults to "Docs".
 
 Do not use the setting ``badge_only=False`` together with the
 ``sphinx_rtd_theme``. In order to avoid the ``badge_only.css`` and font files
