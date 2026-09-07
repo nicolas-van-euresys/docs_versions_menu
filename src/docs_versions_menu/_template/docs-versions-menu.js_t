@@ -26,7 +26,13 @@ async function getRootUrl() {
   }
 }
 
-{%- if url_version_scheme == 'translations' %}
+{%- if url_version_scheme == 'no-translations' %}
+
+async function getCurrentVersionFolder(rootUrl) {
+  return window.location.href.substring(rootUrl.length + 1).split("/")[0];
+}
+
+{%- else %}
 
 function pathParts(rootUrl) {
   return window.location.href.substring(rootUrl.length + 1).split("/");
@@ -52,12 +58,6 @@ function findFallbackLanguage(availableLanguages, version, preferred, defaultLan
   const langs = availableLanguagesFor(version, availableLanguages);
   if (langs.indexOf(preferred) >= 0) return preferred;
   return langs[0] || defaultLanguage;
-}
-
-{%- else %}
-
-async function getCurrentVersionFolder(rootUrl) {
-  return window.location.href.substring(rootUrl.length + 1).split("/")[0];
 }
 
 {%- endif %}
@@ -113,14 +113,14 @@ async function _addVersionsMenu(version_data, rootUrl) {
                        + current_url
                        + "'>" + current_version + "</a></dd></strong>";
     } else {
-      {%- if url_version_scheme == 'translations' %}
+      {%- if url_version_scheme == 'no-translations' %}
+      inner_html += "<dd><a href='"
+                       + current_url.replace(current_folder, folder)
+                       + "'>" + version_data["labels"][folder] + "</a></dd>";
+      {%- else %}
       const targetLang = findFallbackLanguage(availLangs, folder, current_language, default_language);
       inner_html += "<dd><a href='"
                        + buildUrl(rootUrl, targetLang, folder, currentPath)
-                       + "'>" + version_data["labels"][folder] + "</a></dd>";
-      {%- else %}
-      inner_html += "<dd><a href='"
-                       + current_url.replace(current_folder, folder)
                        + "'>" + version_data["labels"][folder] + "</a></dd>";
       {%- endif %}
     }
@@ -196,14 +196,14 @@ async function _addVersionsMenu(version_data, rootUrl) {
   }
   if (warning !== undefined){
     if (version_data["latest"] !== null){
-      {%- if url_version_scheme == 'translations' %}
+      {%- if url_version_scheme == 'no-translations' %}
+      msg = msg + " Documentation is available for the " + "<a href='" +
+        current_url.replace(current_folder, version_data["latest"]) +
+        "'>latest public release</a>."
+      {%- else %}
       const latestLang = findFallbackLanguage(availLangs, version_data["latest"], current_language, default_language);
       msg = msg + " Documentation is available for the " + "<a href='" +
         buildUrl(rootUrl, latestLang, version_data["latest"], currentPath) +
-        "'>latest public release</a>."
-      {%- else %}
-      msg = msg + " Documentation is available for the " + "<a href='" +
-        current_url.replace(current_folder, version_data["latest"]) +
         "'>latest public release</a>."
       {%- endif %}
     }
