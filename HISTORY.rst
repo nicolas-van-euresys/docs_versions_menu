@@ -11,8 +11,9 @@ Unreleased
    `/<version>/<filename>` (A.K.A "no-translations") using the ``--url-version-scheme`` CLI option
    (defaulting to "no-translations" mode for backward compatibility) and ``url_version_scheme`` configuration key in
    ``docs_versions_menu_conf``.
-* Added ``--default-language`` CLI option and corresponding ``default_language`` configuration
-   key for ``docs_versions_menu_conf`` to specify the default language code (defaults to ``'en'``)
+* Added ``--default-language`` CLI option to specify the default language code (defaults to
+   ``'en'``). The value is recorded in ``versions.json`` and read from there by the versions
+   menu JavaScript at runtime; it is not a ``docs_versions_menu_conf`` extension option
 * In translations mode, the CLI now scans `/<language>/<version>/` folder structure and generates
    a ``version_languages`` map in ``versions.json`` tracking which languages are available for each
    version, handling the case where translations may not exist for all versions

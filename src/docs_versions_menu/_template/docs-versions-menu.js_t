@@ -26,7 +26,6 @@ async function getRootUrl() {
 }
 
 const url_version_scheme = {{ url_version_scheme }};
-const default_language = {{ default_language }};
 
 function pathParts(rootUrl) {
   return window.location.href.substring(rootUrl.length + 1).split("/");
@@ -56,10 +55,10 @@ function availableLanguagesFor(version, availableLanguages) {
   return availableLanguages[version];
 }
 
-function findFallbackLanguage(availableLanguages, version, preferred) {
+function findFallbackLanguage(availableLanguages, version, preferred, defaultLanguage) {
   const langs = availableLanguagesFor(version, availableLanguages);
   if (langs.indexOf(preferred) >= 0) return preferred;
-  return langs[0] || default_language;
+  return langs[0] || defaultLanguage;
 }
 
 function getGithubProjectUrl(rootUrl) {
@@ -71,6 +70,7 @@ function getGithubProjectUrl(rootUrl) {
 }
 
 async function _addVersionsMenu(version_data, rootUrl) {
+  const default_language = version_data["default_language"] || 'en';
   const folders = version_data["versions"];
   const current_url = document.URL;
   const current_folder = await getCurrentVersionFolder(rootUrl);
@@ -109,7 +109,7 @@ async function _addVersionsMenu(version_data, rootUrl) {
                        + "'>" + current_version + "</a></dd></strong>";
     } else {
       const targetLang = url_version_scheme === 'translations'
-        ? findFallbackLanguage(availLangs, folder, current_language)
+        ? findFallbackLanguage(availLangs, folder, current_language, default_language)
         : current_language;
       inner_html += "<dd><a href='"
                        + buildUrl(rootUrl, targetLang, folder, currentPath)
@@ -188,7 +188,7 @@ async function _addVersionsMenu(version_data, rootUrl) {
   if (warning !== undefined){
     if (version_data["latest"] !== null){
       const latestLang = url_version_scheme === 'translations'
-         ? findFallbackLanguage(availLangs, version_data["latest"], current_language)
+         ? findFallbackLanguage(availLangs, version_data["latest"], current_language, default_language)
         : current_language;
       msg = msg + " Documentation is available for the " + "<a href='" +
         buildUrl(rootUrl, latestLang, version_data["latest"], currentPath) +
