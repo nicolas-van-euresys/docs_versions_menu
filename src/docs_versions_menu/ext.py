@@ -62,9 +62,6 @@ def add_versions_menu_js_file(app):
     if context['github_project_url'] is None:
         context['github_project_url'] = _JS('null')
     UrlVersionScheme.parse(context['url_version_scheme'])  # checks validity
-    context['url_version_scheme'] = _JS(
-        "'" + context['url_version_scheme'] + "'"
-    )
     js_file_path = Path(tmpdir) / js_file_name
     template = renderer.env.get_template(template_name)
     print(

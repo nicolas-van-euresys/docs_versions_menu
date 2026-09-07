@@ -81,17 +81,36 @@ def test_custom(app, status, warning):
 def test_multi_languages(app, status, warning):
     """Test building documentation with translations URL scheme.
 
-    This tests that the url_version_scheme configuration is properly passed
-    to the JavaScript template. The default_language is not part of the
-    extension configuration: it is read from versions.json at runtime.
+    The url_version_scheme configuration selects, at template-generation
+    time, which flavor of the JavaScript gets rendered: it is not passed
+    through as a JavaScript variable. The default_language is not part of
+    the extension configuration either: it is read from versions.json at
+    runtime.
     """
     app.build()
     _build = Path(app.outdir)
     assert (_build / 'index.html').is_file()
     assert (_build / '_static' / 'docs-versions-menu.js').is_file()
     js = (_build / '_static' / 'docs-versions-menu.js').read_text()
-    assert "url_version_scheme = 'translations'" in js
-    assert "default_language" not in js.split("_addVersionsMenu")[0]
     # Check that the language switcher code is present
     assert 'findFallbackLanguage' in js
+    assert 'getCurrentLanguage' in js
     assert 'Translations' in js
+
+
+@pytest.mark.sphinx('html', testroot='basic')
+def test_no_translations_js_is_unaffected(app, status, warning):
+    """Test that no-translations mode leaves the JS output untouched.
+
+    The translations-only code (language switching, per-language index
+    pages) must be compiled out of the JavaScript entirely when the
+    "translations" URL scheme is not in use, so that the no-translations
+    behavior and output stay identical to before that feature existed.
+    """
+    app.build()
+    _build = Path(app.outdir)
+    js = (_build / '_static' / 'docs-versions-menu.js').read_text()
+    assert 'findFallbackLanguage' not in js
+    assert 'getCurrentLanguage' not in js
+    assert 'buildUrl' not in js
+    assert 'Translations' not in js
