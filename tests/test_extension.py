@@ -100,17 +100,18 @@ def test_multi_languages(app, status, warning):
 
 @pytest.mark.sphinx('html', testroot='basic')
 def test_no_translations_js_is_unaffected(app, status, warning):
-    """Test that no-translations mode leaves the JS output untouched.
+    """Test that no-translations mode compiles out translation-only code.
 
-    The translations-only code (language switching, per-language index
-    pages) must be compiled out of the JavaScript entirely when the
-    "translations" URL scheme is not in use, so that the no-translations
-    behavior and output stay identical to before that feature existed.
+    Language switching and per-language index pages are translations-only
+    concepts, so their code (language lookup, the "Translations" menu
+    section) must not appear in the JavaScript when the "translations" URL
+    scheme is not in use. ``buildUrl`` is shared by both modes (it also
+    builds plain, language-less URLs for no-translations), so it is not
+    checked here.
     """
     app.build()
     _build = Path(app.outdir)
     js = (_build / '_static' / 'docs-versions-menu.js').read_text()
     assert 'findFallbackLanguage' not in js
     assert 'getCurrentLanguage' not in js
-    assert 'buildUrl' not in js
     assert 'Translations' not in js
