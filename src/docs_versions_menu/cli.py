@@ -64,14 +64,14 @@ def _write_index_html(
                 {
                     lang
                     for langs in version_data.get(
-                        'available_languages', {}
+                        'available-languages', {}
                     ).values()
                     for lang in langs
                 }
             )
             latest = version_data.get('latest')
             versions = version_data.get('versions', [])
-            available = version_data.get('available_languages', {})
+            available = version_data.get('available-languages', {})
 
             def _best_for_lang(lang):
                 if latest and lang in available.get(latest, []):

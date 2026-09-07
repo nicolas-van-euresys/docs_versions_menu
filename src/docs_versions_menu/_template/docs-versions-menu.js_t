@@ -70,7 +70,7 @@ function getGithubProjectUrl(rootUrl) {
 }
 
 async function _addVersionsMenu(version_data, rootUrl) {
-  const default_language = version_data["default_language"] || 'en';
+  const default_language = version_data["default-language"] || 'en';
   const folders = version_data["versions"];
   const current_url = document.URL;
   const current_folder = await getCurrentVersionFolder(rootUrl);
@@ -101,7 +101,7 @@ async function _addVersionsMenu(version_data, rootUrl) {
       "<div class='injected'>" +
         "<dl>" +
           "<dt>Versions</dt>";
-  const availLangs = version_data["available_languages"] || {};
+  const availLangs = version_data["available-languages"] || {};
   for (const folder of folders) {
     if (folder === current_folder){
       inner_html += "<strong><dd><a href='"

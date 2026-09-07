@@ -73,7 +73,7 @@ def get_version_data(
     versions = list(reversed(versions))  # newest first
     version_data = {
         # URL version scheme: 'no-translations' or 'translations'
-        'url_version_scheme': str(url_version_scheme),
+        'url-version-scheme': str(url_version_scheme),
         # list of *all* folders
         'folders': folders,
         #
@@ -97,8 +97,8 @@ def get_version_data(
     }
 
     if url_version_scheme == UrlVersionScheme.TRANSLATIONS:
-        version_data['default_language'] = default_language
-        version_data['available_languages'] = {
+        version_data['default-language'] = default_language
+        version_data['available-languages'] = {
             k: sorted(v) for k, v in folders_and_langs.items()
         }
 

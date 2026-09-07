@@ -222,7 +222,7 @@ def test_many_releases(caplog):
         with (cwd / 'versions.json').open() as versions_json:
             versions_data = json.load(versions_json)
             assert versions_data == {
-                'url_version_scheme': 'no-translations',
+                'url-version-scheme': 'no-translations',
                 'downloads': {
                     'doc-testing': [],
                     'master': [
@@ -473,7 +473,7 @@ def test_custom_envvars(caplog):
         with (cwd / 'versions.json').open() as versions_json:
             versions_data = json.load(versions_json)
             assert versions_data == {
-                'url_version_scheme': 'no-translations',
+                'url-version-scheme': 'no-translations',
                 'downloads': {
                     'doc-testing': [],
                     'master': [],
@@ -559,7 +559,7 @@ def test_custom_labels_warnings(caplog):
         'DOCS_VERSIONS_MENU_LABEL': "<releases>: {{ folder | replace('v', '', 1) }}; doc-testing: doc; master: {{ folder }} (latest dev branch)",
     }
     expected_versions_data = {
-        'url_version_scheme': 'no-translations',
+        'url-version-scheme': 'no-translations',
         'downloads': {
             'doc-testing': [],
             'master': [],
@@ -707,8 +707,8 @@ def test_translations_basic_structure(caplog):
         assert result.exit_code == 0
         with (cwd / 'versions.json').open() as versions_json:
             versions_data = json.load(versions_json)
-            assert versions_data['url_version_scheme'] == 'translations'
-            assert versions_data['default_language'] == 'en'
+            assert versions_data['url-version-scheme'] == 'translations'
+            assert versions_data['default-language'] == 'en'
             assert sorted(versions_data['folders']) == [
                 'main',
                 'v0.1.0',
@@ -716,8 +716,8 @@ def test_translations_basic_structure(caplog):
             ]
             assert versions_data['latest'] == 'v1.0.0'
             assert versions_data['default-branch'] == 'main'
-            # available_languages: folder -> list of available language codes
-            assert versions_data['available_languages'] == {
+            # available-languages: folder -> list of available language codes
+            assert versions_data['available-languages'] == {
                 'main': ['en', 'fr'],
                 'v0.1.0': ['en'],
                 'v1.0.0': ['en', 'fr'],
@@ -751,9 +751,9 @@ def test_translations_via_envvar(caplog):
         assert result.exit_code == 0
         with (cwd / 'versions.json').open() as versions_json:
             versions_data = json.load(versions_json)
-            assert versions_data['url_version_scheme'] == 'translations'
-            assert versions_data['default_language'] == 'fr'
-            assert versions_data['available_languages']['v1.0.0'] == [
+            assert versions_data['url-version-scheme'] == 'translations'
+            assert versions_data['default-language'] == 'fr'
+            assert versions_data['available-languages']['v1.0.0'] == [
                 'en',
                 'fr',
             ]
@@ -822,7 +822,7 @@ def test_translations_custom_default_language(caplog):
         assert result.exit_code == 0
         with (cwd / 'versions.json').open() as versions_json:
             versions_data = json.load(versions_json)
-            assert versions_data['default_language'] == 'fr'
+            assert versions_data['default-language'] == 'fr'
             # Downloads should come from fr/ since it's the default language
             assert 'pdf' in [
                 d[0] for d in versions_data['downloads']['v1.0.0']

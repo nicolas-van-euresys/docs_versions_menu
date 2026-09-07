@@ -15,8 +15,8 @@ Unreleased
    ``'en'``). The value is recorded in ``versions.json`` and read from there by the versions
    menu JavaScript at runtime; it is not a ``docs_versions_menu_conf`` extension option
 * In translations mode, the CLI now scans `/<language>/<version>/` folder structure and generates
-   a ``version_languages`` map in ``versions.json`` tracking which languages are available for each
-   version, handling the case where translations may not exist for all versions
+   an ``available-languages`` map in ``versions.json`` tracking which languages are available for
+   each version, handling the case where translations may not exist for all versions
 * In translations mode, per-language ``index.html`` redirect files are now generated under each
    language folder (e.g., ``/en/index.html``, ``/fr/index.html``)
 * The versions menu JavaScript now includes a language switcher ("Translations" section) in
@@ -24,6 +24,9 @@ Unreleased
    language, it automatically falls back to a language where that version exists
 * Fixed a white scrollbar-gutter bar showing on the right edge of the expanded
    versions menu with the ``sphinx_rtd_theme``
+* Renamed the ``url_version_scheme``, ``default_language`` and ``available_languages`` keys in
+   ``versions.json`` to ``url-version-scheme``, ``default-language`` and ``available-languages``,
+   to match the existing hyphenated-key convention (e.g. ``default-branch``)
 
 
 0.6.0 (2026-06-30)
