@@ -105,9 +105,7 @@ def test_no_translations_js_is_unaffected(app, status, warning):
     Language switching and per-language index pages are translations-only
     concepts, so their code (language lookup, the "Translations" menu
     section) must not appear in the JavaScript when the "translations" URL
-    scheme is not in use. ``buildUrl`` is shared by both modes (it also
-    builds plain, language-less URLs for no-translations), so it is not
-    checked here.
+    scheme is not in use.
     """
     app.build()
     _build = Path(app.outdir)
