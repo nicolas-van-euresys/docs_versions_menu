@@ -1,5 +1,6 @@
 """Command line utility for generating versions.json file."""
 
+import copy
 import functools
 import json
 import logging
@@ -60,80 +61,69 @@ def _write_index_html(
             subprocess.run(['git', 'add', 'index.html'], check=False)
 
         case UrlVersionScheme.TRANSLATIONS:
-            languages = sorted(
-                {
-                    lang
-                    for langs in version_data.get(
-                        'available-languages', {}
-                    ).values()
-                    for lang in langs
-                }
+            folders: list[str] = version_data['folders']
+            available_languages: dict[str, list[str]] = version_data[
+                'available-languages'
+            ]
+            languages = set(
+                lang
+                for langs in available_languages.values()
+                for lang in langs
             )
-            latest = version_data.get('latest')
-            versions = version_data.get('versions', [])
-            available = version_data.get('available-languages', {})
-
-            def _best_for_lang(lang):
-                if latest and lang in available.get(latest, []):
-                    return latest
-                for v in versions:
-                    if lang in available.get(v, []):
-                        return v
-                return None
-
-            def _target(lang):
-                best = _best_for_lang(lang)
-                if best:
-                    return lang + '/' + best
-                fallback = _best_for_lang(default_language)
-                if fallback:
-                    return default_language + '/' + fallback
-                return None
-
-            # Root index.html
-            root_target = _target(default_language)
-            if root_target:
-                with open("index.html", "w") as out_fh:
-                    out_fh.write(
-                        template.render(
-                            dict(
-                                version_data={
-                                    'latest': root_target,
-                                    'default-branch': None,
-                                    'folders': [root_target],
-                                }
-                            )
-                        )
-                    )
-                subprocess.run(['git', 'add', 'index.html'], check=False)
-                logger.debug("Root index.html redirects to %s", root_target)
 
             # Per-language index.html files
-            for lang in languages:
-                target = _target(lang)
-                if target:
-                    lang_dir = Path(lang)
-                    lang_dir.mkdir(exist_ok=True)
-                    version_name = target.split('/')[1]
-                    with open(str(lang_dir / 'index.html'), "w") as out_fh:
-                        out_fh.write(
-                            template.render(
-                                dict(
-                                    version_data={
-                                        'latest': version_name,
-                                        'default-branch': None,
-                                        'folders': [version_name],
-                                    }
-                                )
-                            )
-                        )
-                    subprocess.run(
-                        ['git', 'add', str(lang_dir / 'index.html')],
-                        check=False,
+            for lang in sorted(languages):
+                folders_in_lang = set(
+                    f for f in folders if lang in available_languages[f]
+                )
+                lang_version_data = copy.deepcopy(version_data)
+                lang_version_data["folders"] = [
+                    f
+                    for f in lang_version_data["folders"]
+                    if f in folders_in_lang
+                ]
+                lang_version_data["versions"] = [
+                    v
+                    for v in lang_version_data["versions"]
+                    if v in folders_in_lang
+                ]
+                if not lang_version_data["latest"] in folders_in_lang:
+                    del lang_version_data["latest"]
+                if not lang_version_data["default"] in folders_in_lang:
+                    del lang_version_data["default"]
+
+                with open(f"{lang}/index.html", "w") as out_fh:
+                    out_fh.write(
+                        template.render(dict(version_data=lang_version_data))
                     )
-                    logger.debug(
-                        "Language %s index.html redirects to %s", lang, target
-                    )
+                subprocess.run(
+                    ['git', 'add', f"{lang}/index.html"], check=False
+                )
+
+            # Main index.html file
+            template_file_m = Path("index_translations_main.html_t")
+            if template_file_m.is_file():
+                logger.debug(
+                    "Using index_translations_main.html_t template from %s",
+                    template_file_m,
+                )
+            else:
+                template_file_m = (
+                    Path(__file__).parent
+                    / '_template'
+                    / 'index_translations_main.html_t'
+                )
+                logger.debug(
+                    "Using default index_translations_main.html_t template"
+                )
+            template_m_str = template_file_m.read_text()
+            template_m = jinja2.Environment().from_string(template_m_str)
+
+            with open("index.html", "w") as out_fh:
+                out_fh.write(
+                    template_m.render(dict(version_data=version_data))
+                )
+            subprocess.run(['git', 'add', 'index.html'], check=False)
 
         case _:
             raise NotImplementedError()

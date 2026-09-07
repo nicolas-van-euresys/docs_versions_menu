@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Refresh" content="0; url={{ version_data['default-language'] }}" />
+  </head>
+  <body>
+    <p>Go to the <a href="{{ version_data['default-language'] }}">default language</a>.</p>
+  </body>
+</html>
