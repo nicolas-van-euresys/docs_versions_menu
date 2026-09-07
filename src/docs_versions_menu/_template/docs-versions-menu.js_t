@@ -74,15 +74,13 @@ function getGithubProjectUrl(rootUrl) {
 async function _addVersionsMenu(version_data, rootUrl) {
   // The menu was reverse-engineered from the RTD websites, so it's very
   // specific to the sphinx_rtd_theme
-  {%- if url_version_scheme == 'translations' %}
-  const default_language = version_data["default-language"] || 'en';
-  {%- endif %}
   const folders = version_data["versions"];
   const current_url = document.URL;
   const current_folder = await getCurrentVersionFolder(rootUrl);
   if (!current_folder || !(current_folder in version_data["labels"])) return;
   const current_version = version_data["labels"][current_folder];
   {%- if url_version_scheme == 'translations' %}
+  const default_language = version_data["default-language"] || 'en';
   const current_language = getCurrentLanguage(rootUrl);
   const currentPath = pathParts(rootUrl).slice(2).join("/");
   const availLangs = version_data["available-languages"] || {};
