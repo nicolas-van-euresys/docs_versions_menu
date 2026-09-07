@@ -89,8 +89,8 @@ def _write_index_html(
                 ]
                 if not lang_version_data["latest"] in folders_in_lang:
                     del lang_version_data["latest"]
-                if not lang_version_data["default"] in folders_in_lang:
-                    del lang_version_data["default"]
+                if not lang_version_data["default-branch"] in folders_in_lang:
+                    del lang_version_data["default-branch"]
 
                 with open(f"{lang}/index.html", "w") as out_fh:
                     out_fh.write(
