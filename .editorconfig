@@ -25,3 +25,6 @@ indent_size = 2
 
 [*.html_t]
 indent_size = 2
+
+[*.rst]
+indent_size = 2

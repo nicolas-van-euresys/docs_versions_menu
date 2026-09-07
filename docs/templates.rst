@@ -44,12 +44,12 @@ different templates to write the `index.html` files:
 
 1. ``index.html`` as previously that is used only to generate `/<lang>/index.html` files.
 2. ``index_translations_main.html_t`` that is used specifically to generate the main
-    `/index.html` under the webroot.
+   `/index.html` under the webroot.
 
 See the default template for ``index_translations_main.html_t``:
 
 .. literalinclude:: ../src/docs_versions_menu/_template/index_translations_main.html_t
-    :language: html
+  :language: html
 
 .. _customizing_docs_versions_menu_js:
 

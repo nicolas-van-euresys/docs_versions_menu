@@ -66,9 +66,9 @@ The dict may contain the following keys:
 * ``badge_only`` (bool): Whether to render the version menu as a "badge" in the lower right corner (defaults to True unless :confval:`html_theme` is ``"sphinx_rtd_theme"``)
 * ``menu_title`` (str): The label to be shown in to left corner of the full versions menu (if not ``badge_only``). Defaults to "Docs".
 * ``url_version_scheme`` (str): Either ``"no-translations"`` (default) or ``"translations"``, selecting the URL scheme
-    used for versioned (and, in the latter case, multi-language) documentation, see :ref:`translations`. This must be set to
-    the same value as the ``docs-versions-menu`` command's
-    :option:`--url-version-scheme <docs-versions-menu --url-version-scheme>` option.
+  used for versioned (and, in the latter case, multi-language) documentation, see :ref:`translations`. This must be set
+  to the same value as the ``docs-versions-menu`` command's
+  :option:`--url-version-scheme <docs-versions-menu --url-version-scheme>` option.
 
 Do not use the setting ``badge_only=False`` together with the
 ``sphinx_rtd_theme``. In order to avoid the ``badge_only.css`` and font files
