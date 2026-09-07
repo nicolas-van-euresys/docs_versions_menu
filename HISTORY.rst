@@ -6,27 +6,26 @@ History
 Unreleased
 ----------
 
-* Added support for translations deployment. Now it is possible to switch url scheme to
-   `/<language>/<version>/<filename>` mode (A.K.A "translations") instead of original
-   `/<version>/<filename>` (A.K.A "no-translations") using the ``--url-version-scheme`` CLI option
-   (defaulting to "no-translations" mode for backward compatibility) and ``url_version_scheme`` configuration key in
-   ``docs_versions_menu_conf``.
-* Added ``--default-language`` CLI option to specify the default language code (defaults to
-   ``'en'``). The value is recorded in ``versions.json`` and read from there by the versions
-   menu JavaScript at runtime; it is not a ``docs_versions_menu_conf`` extension option
-* In translations mode, the CLI now scans `/<language>/<version>/` folder structure and generates
-   an ``available-languages`` map in ``versions.json`` tracking which languages are available for
-   each version, handling the case where translations may not exist for all versions
-* In translations mode, per-language ``index.html`` redirect files are now generated under each
-   language folder (e.g., ``/en/index.html``, ``/fr/index.html``)
-* The versions menu JavaScript now includes a language switcher ("Translations" section) in
-   translations mode, with smart fallback: when switching to a version unavailable in the current
-   language, it automatically falls back to a language where that version exists
 * Fixed a white scrollbar-gutter bar showing on the right edge of the expanded
    versions menu with the ``sphinx_rtd_theme``
-* Renamed the ``url_version_scheme``, ``default_language`` and ``available_languages`` keys in
-   ``versions.json`` to ``url-version-scheme``, ``default-language`` and ``available-languages``,
-   to match the existing hyphenated-key convention (e.g. ``default-branch``)
+* Added support for translations deployment:
+
+    *  Now it is possible to switch url scheme to `/<language>/<version>/<filename>` mode (A.K.A
+        "translations") instead of original `/<version>/<filename>` (A.K.A "no-translations") using the
+        ``--url-version-scheme`` CLI option (defaulting to "no-translations" mode for backward compatibility)
+        and ``url_version_scheme`` configuration key in ``docs_versions_menu_conf``. (The value passed to CLI
+        and the extension must be consistent.)
+    * Added ``--default-language`` CLI option to specify the default language code when using
+        url version scheme `translations` (defaults to ``'en'``). The value is recorded in ``versions.json``
+        and read from there by the versions menu JavaScript at runtime.
+    * When url version scheme is set to `translations`, also adds ``available-languages`` map in
+        ``versions.json`` tracking which languages are available for each version, to allow handling
+        of the case where translations may not exist for all versions.
+    * Adds a new template named `index_translations_main.html_t` that is used in place of the already
+        included `index.html_t` to generate the main `index.html` when url version scheme is set to
+        `translations`.
+    * The versions menu JavaScript now includes a language switcher ("Translations" section) when url
+        version scheme is set to `translations`.
 
 
 0.6.0 (2026-06-30)
