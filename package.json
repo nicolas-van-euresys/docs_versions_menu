@@ -1,0 +1,19 @@
+{
+  "name": "docs_versions_menu",
+  "version": "0.0.0",
+  "description": "",
+  "homepage": "https://github.com/goerz/docs_versions_menu#readme",
+  "bugs": {
+    "url": "https://github.com/goerz/docs_versions_menu/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/goerz/docs_versions_menu.git"
+  },
+  "license": "MIT",
+  "author": "Michael Goerz",
+  "type": "commonjs",
+  "scripts": {
+    "test": "echo \"TODO\" && exit 0"
+  }
+}

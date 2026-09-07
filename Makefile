@@ -125,6 +125,12 @@ clean:  ## Remove build, test, and documentation artifacts
 distclean: clean  ## Remove all generated files, including the .venv environments
 	rm -rf .venv uv.lock .tox
 
+npminstall: ## Installs npm dependencies. Node >= 24 must be installed
+	npm install
+
+jstest: npminstall ## Runs JavaScript tests
+	npm run test
+
 # How to execute notebook files
 %.ipynb.log: %.ipynb
 	$(UV) jupyter nbconvert --to notebook --execute --inplace \
