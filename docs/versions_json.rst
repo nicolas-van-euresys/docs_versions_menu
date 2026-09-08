@@ -22,7 +22,7 @@ The file contains a (nested) dictionary with the following keys:
 
 The following two keys are only present when ``'url-version-scheme'`` is ``'translations'``:
 
-* ``'default-language'``: the default language code, as set via :option:`--default-language <docs-versions-menu --default-language>`
+* ``'default-language'``: the default language code, as set via :option:`--default-language <docs-versions-menu --default-language>` (defaults to ``en``)
 * ``'available-languages'``: a map from folder names to the list of language codes in which that version is available
 
 See Docs Version Menu's own `versions.json file`_ for an example (`formatted view`_).

@@ -42,7 +42,7 @@ When :option:`--url-version-scheme <docs-versions-menu --url-version-scheme>` is
 to `translations` (see :ref:`translations`), `docs-versions-menu` actually uses two
 different templates to write the `index.html` files:
 
-1. ``index.html`` as previously that is used only to generate `/<lang>/index.html` files.
+1. ``index.html``, as previously, that is used only to generate `/<lang>/index.html` files.
 2. ``index_translations_main.html_t`` that is used specifically to generate the main
    `/index.html` under the webroot.
 
