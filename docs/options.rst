@@ -33,14 +33,6 @@ documentation is then served under ``/<language>/<version>/<filename>``,
 matching the layout used by Read the Docs for its own multi-language
 projects.
 
-.. important::
-
-  When using the ``translations`` URL scheme, the ``docs_versions_menu``
-  Sphinx extension must be told about it too, via the
-  ``url_version_scheme`` key of ``docs_versions_menu_conf`` in ``conf.py``
-  (see :ref:`sphinx_ext_customization`). The value given to the CLI and to
-  the extension must match.
-
 When using the `translations` mode, the following changes occur:
 
 * The versions menu also gets an additional "Translations" section for

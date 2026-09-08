@@ -12,15 +12,12 @@ Unreleased
 
   * Now it is possible to switch url scheme to `/<language>/<version>/<filename>` mode (A.K.A
     "translations") instead of original `/<version>/<filename>` (A.K.A "no-translations") using the
-    ``--url-version-scheme`` CLI option (defaulting to "no-translations" mode for backward compatibility)
-    and ``url_version_scheme`` configuration key in ``docs_versions_menu_conf``. (The value passed to CLI
-    and the extension must be consistent.)
+    ``--url-version-scheme`` CLI option (defaulting to "no-translations" mode for backward compatibility).
   * Added ``--default-language`` CLI option to specify the default language code when using
     url version scheme `translations` (defaults to ``'en'``). The value is recorded in ``versions.json``
     and read from there by the versions menu JavaScript at runtime.
-  * When url version scheme is set to `translations`, also adds ``available-languages`` map in
-    ``versions.json`` tracking which languages are available for each version, to allow handling
-    of the case where translations may not exist for all versions.
+  * Added ``url-version-scheme`` to ``versions.json``. Also, Wwen url version scheme is set to `translations`,
+    also adds ``available-languages`` and ``default-language`` in ``versions.json``.
   * Adds a new template named `index_translations_main.html_t` that is used in place of the already
     included `index.html_t` to generate the main `index.html` when url version scheme is set to
     `translations`.
