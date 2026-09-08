@@ -3,7 +3,7 @@ requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "docs_versions_menu"
+name = "docs_versions_menu-euresys"
 dynamic = ["version"]
 description = "A versions menu for Sphinx-based documentation"
 readme = "README.rst"
