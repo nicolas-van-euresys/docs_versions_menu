@@ -49,17 +49,16 @@ def test_rtdtheme(app, status, warning):
     assert not (_build / '_static' / 'badge_only.css').is_file()
     html = (_build / 'index.html').read_text()
     assert 'src="_static/docs-versions-menu.js' in html
-    js = (_build / '_static' / 'docs-versions-menu.js').read_text()
-    assert "<span class='fa fa-book'> Docs </span>" in js
+    assert 'menuTitle: "Docs"' in html
 
 
 @pytest.mark.sphinx('html', testroot='custom')
 def test_custom(app, status, warning):
     """Test building documentation with the docs_versions_menu extension.
 
-    This tests a configuration with full customization (custom template for the
-    JS file, and a custom docs_versions_menu_conf dict in conf.py;
-    ./test_extension/roots/test-custom/
+    This tests a configuration with full customization (a custom template for
+    the injected configuration script, and a custom docs_versions_menu_conf
+    dict in conf.py; ./test_extension/roots/test-custom/
     """
     app.build()
     _build = Path(app.outdir)
@@ -68,10 +67,9 @@ def test_custom(app, status, warning):
     assert not (_build / '_static' / 'badge_only.css').is_file()
     html = (_build / 'index.html').read_text()
     assert 'src="_static/docs-versions-menu.js' in html
-    js = (_build / '_static' / 'docs-versions-menu.js').read_text()
-    assert "var my_var = 'custom variable';" in js
+    assert 'badgeOnly: false' in html
+    assert 'menuTitle: "Docs"' in html
     assert (
-        "var github_project_url = 'https://github.com/goerz/docs_versions_menu';"
-        in js
+        'githubProjectUrl: "https://github.com/goerz/docs_versions_menu"'
+        in html
     )
-    assert "var menu_title = 'Docs'" in js

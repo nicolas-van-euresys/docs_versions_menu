@@ -1,0 +1,7 @@
+document.addEventListener('DOMContentLoaded', function() {
+    docsVersionMenu.addVersionsMenu({
+        badgeOnly: {{ badge_only|tojson }},
+        menuTitle: {{ menu_title|tojson }},
+        githubProjectUrl: {{ github_project_url|tojson }},
+    })
+});

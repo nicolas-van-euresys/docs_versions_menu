@@ -1,46 +1,20 @@
 """Sphinx extension for showing the Doctr Versions Menu."""
 
 import os
-import shutil
-import tempfile
 from pathlib import Path
 
 from sphinx.util.template import SphinxRenderer
 
 
-class _JS(str):
-    """Javascript code wrapper.
-
-    The default ``docs-versions-menu.jt_t`` template renders variables via
-    their __repr__. Normal strings have a quoted __repr__, this :class:`JS`
-    wrapper does not.
-    """
-
-    def __repr__(self):
-        return self
-
-
 def add_versions_menu_js_file(app):
-    """Add docs-versions-menu.js file as a static js file to Sphinx."""
-    tmpdir = tempfile.mkdtemp()
-    app.config._docs_versions_menu_temp_dir = tmpdir
-    js_file_name = 'docs-versions-menu.js'
+    """Add docs-versions-menu.js as a static file, on every page."""
+    app.config.html_static_path.append(str(Path(__file__).parent / '_js'))
+    app.add_js_file('docs-versions-menu.js')
+
     template_path = [
         os.path.join(app.confdir, folder)
         for folder in app.config.templates_path
     ]
-    template_name = 'docs-versions-menu.js_t'
-    legacy_template_name = 'doctr-versions-menu.js_t'
-    for folder in template_path:
-        t_legacy = os.path.join(folder, legacy_template_name)
-        t_new = os.path.join(folder, template_name)
-        if os.path.isfile(t_legacy) and not os.path.isfile(t_new):
-            print(
-                "WARNING: using legacy template %s. This file should be "
-                "renamed to %s" % (t_legacy, t_new)
-            )
-            template_name = legacy_template_name
-
     template_path.append(str(Path(__file__).parent / '_template'))
     renderer = SphinxRenderer(template_path=template_path)
     context = dict(
@@ -56,18 +30,14 @@ def add_versions_menu_js_file(app):
         )
         context.update(app.config.doctr_versions_menu_conf)
     context.update(app.config.docs_versions_menu_conf)
-    if context['github_project_url'] is None:
-        context['github_project_url'] = _JS('null')
-    js_file_path = Path(tmpdir) / js_file_name
+    template_name = 'docs-versions-menu-launch.js_t'
     template = renderer.env.get_template(template_name)
     print(
-        "creating %s from template %s for docs-versions-menu"
-        % (js_file_name, template.filename)
+        "injecting configuration from template %s for docs-versions-menu"
+        % template.filename
     )
-    with js_file_path.open('w') as js_file:
-        js_file.write(template.render(**context))
-    app.config.html_static_path.append(tmpdir)
-    app.add_js_file(js_file_name)
+    app.add_js_file(None, body=template.render(**context))
+
     if context['badge_only']:
         app.config.html_static_path.extend(
             [
@@ -76,8 +46,3 @@ def add_versions_menu_js_file(app):
             ]
         )
         app.add_css_file('badge_only.css')
-
-
-def cleanup(app, exception):
-    """Remove temporary files."""
-    shutil.rmtree(app.config._docs_versions_menu_temp_dir)
