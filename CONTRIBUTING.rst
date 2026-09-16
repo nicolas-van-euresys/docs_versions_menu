@@ -58,9 +58,16 @@ Contributing to the package's development requires that you have uv_ installed.
 uv handles Python interpreter management and virtual environments automatically.
 The recommended way to install uv is via the `official installer`_.
 
+Node.js_ (version 24 or later) should also, facultatively, be installed whenever
+altering the JavaScript part of this project as it is needed if to run the test
+suite for the Sphinx extension's client-side JavaScript (see Testing_ below).
+Please note that, while facultative for maintainers only altering the Python part,
+the CI still runs tests using Node.js.
+
 
 .. _uv: https://docs.astral.sh/uv/
 .. _official installer: https://docs.astral.sh/uv/getting-started/installation/
+.. _Node.js: https://nodejs.org/
 
 
 Pull Requests
@@ -161,6 +168,37 @@ file (``*.rst``) are picked up (by the `pytest doctest plugin`_).
 .. _pytest: https://docs.pytest.org/en/latest/
 .. _doctests: https://docs.python.org/3.8/library/doctest.html
 .. _pytest doctest plugin: https://docs.pytest.org/en/latest/how-to/doctest.html
+
+
+The Sphinx extension's client-side JavaScript (in
+``src/docs_versions_menu/_js/``) has its own test suite, based on
+node:test_. This is *optional*: it requires Node.js (version 24 or later)
+to be installed, but is not otherwise necessary to contribute to the
+package. From a checkout of the ``docs_versions_menu`` repository you can use
+
+.. code-block:: shell
+
+    make jstest
+
+to run it (see ``make help`` for the related ``jscoverage`` targets).
+
+The Javascript is also subject to linting that can be tested with
+
+.. code-block:: shell
+
+    make jslint
+
+Some of these tests compare rendered HTML against stored snapshot files
+(under ``jstests/snapshots/``). If a change intentionally alters that
+output, regenerate the snapshots with
+
+.. code-block:: shell
+
+    make jsupdate-snapshots
+
+and review the resulting diff carefully before committing it.
+
+.. _node:test: https://nodejs.org/api/test.html
 
 
 Code Style
