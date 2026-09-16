@@ -1,7 +1,8 @@
-document.addEventListener('DOMContentLoaded', function() {
-    docsVersionMenu.addVersionsMenu({
-        badgeOnly: {{ badge_only|tojson }},
-        menuTitle: {{ menu_title|tojson }},
-        githubProjectUrl: {{ github_project_url|tojson }},
-    })
+document.addEventListener('DOMContentLoaded', async function() {
+  const version_data = await docsVersionMenu.addVersionsMenu({
+    badgeOnly: {{ badge_only|tojson }},
+    menuTitle: {{ menu_title|tojson }},
+    githubProjectUrl: {{ github_project_url|tojson }},
+  });
+  // add additional customisation after rendering of menu if needed
 });

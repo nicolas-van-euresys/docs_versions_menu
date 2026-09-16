@@ -78,7 +78,7 @@
     return null;
   }
 
-  docsVersionMenu._addVersionsMenu = async function (version_data, rootUrl, options) {
+  docsVersionMenu._addVersionsMenu = function (version_data, rootUrl, options) {
     // The menu was reverse-engineered from the RTD websites, so it's very
     // specific to the sphinx_rtd_theme
     const folders = version_data["versions"];
@@ -210,6 +210,7 @@
    *     convention; if that detection fails, the section is omitted.
    *     Passing an empty string explicitly disables the section, without
    *     attempting auto-detection.
+   * @returns The versions.json file content.
    */
   docsVersionMenu.addVersionsMenu = async function(options) {
     // set default values
@@ -219,12 +220,8 @@
       githubProjectUrl: null
     }, options);
 
-    try {
-      const [version_data, rootUrl] = await docsVersionMenu._loadVersionDataWithRootUrl();
-      await docsVersionMenu._addVersionsMenu(version_data, rootUrl, options);
-    } catch(err) {
-      console.error("docs-versions-menu: failed to load", err);
-    }
+    const [version_data, rootUrl] = await docsVersionMenu._loadVersionDataWithRootUrl();
+    docsVersionMenu._addVersionsMenu(version_data, rootUrl, options);
 
     if (options.badgeOnly) {
       document.body.addEventListener('click', function(e) {
@@ -238,6 +235,7 @@
         }
       });
     }
+    return version_data;
   }
 
   // Node.js or browser

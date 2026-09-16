@@ -302,14 +302,12 @@ test('addVersionsMenu', async (t) => {
                 [`${scenario.rootUrl}/versions.json`]: scenario.versionData,
             });
             setupDom(scenario.pageUrl);
-            t.mock.method(console, 'error');
 
-            await docsVersionMenu.addVersionsMenu(scenario.options);
+            const returned = await docsVersionMenu.addVersionsMenu(
+                scenario.options
+            );
 
-            // Guards against _loadVersionDataWithRootUrl/_addVersionsMenu
-            // silently swallowing an error, which would otherwise leave
-            // us snapshotting an empty (but "passing") body.
-            assert.equal(console.error.mock.callCount(), 0);
+            assert.deepEqual(returned, scenario.versionData);
             t.assert.fileSnapshot(
                 beautifyHtml(document.body.innerHTML, { indent_size: 2 }),
                 path.join(__dirname, 'snapshots', scenario.file),
@@ -317,4 +315,28 @@ test('addVersionsMenu', async (t) => {
             );
         });
     }
+
+    await t.test(
+        'rejects when versions.json cannot be fetched',
+        async (t) => {
+            setupDom('https://example.com/docs/index.html');
+            t.mock.method(global, 'fetch', async (url, options) => {
+                if (options && options.method === 'HEAD') {
+                    // Let getRootUrl succeed, so the failure below comes
+                    // from actually fetching the file's content.
+                    return { ok: true, status: 200, statusText: 'OK' };
+                }
+                return {
+                    ok: false,
+                    status: 500,
+                    statusText: 'Internal Server Error',
+                };
+            });
+
+            await assert.rejects(
+                () => docsVersionMenu.addVersionsMenu(),
+                /500 Internal Server Error/
+            );
+        }
+    );
 });
