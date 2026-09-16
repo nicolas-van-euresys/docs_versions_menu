@@ -66,3 +66,9 @@ jobs:
         run:  |
           make jslint
           make jstest
+
+      - uses: codecov/codecov-action@v7
+        with:
+          files: ./jscoverage/lcov.info
+          flags: javascript
+          verbose: false

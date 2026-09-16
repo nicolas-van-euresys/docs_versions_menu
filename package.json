@@ -14,11 +14,13 @@
   "author": "Michael Goerz",
   "type": "commonjs",
   "scripts": {
-    "test": "node --test",
+    "test": "c8 --reports-dir=jscoverage --reporter=text --reporter=lcov node --test",
+    "coverage": "c8 --reports-dir=jscoverage --reporter=text --reporter=html node --test",
     "lint": "eslint eslint.config.js src/docs_versions_menu/_js jstests"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "c8": "^12.0.0",
     "eslint": "^10.10.0",
     "eslint-plugin-es-x": "^10.0.0",
     "globals": "^17.12.0",
