@@ -30,7 +30,7 @@
         }
     }
 
-    docsVersionMenu.getCurrentVersionFolder = async function (rootUrl) {
+    docsVersionMenu.getCurrentVersionFolder = function (rootUrl) {
         return window.location.href.substring(rootUrl.length + 1).split("/")[0];
     }
 
@@ -48,7 +48,7 @@
         // specific to the sphinx_rtd_theme
         const folders = version_data["versions"];
         const current_url = document.URL;
-        const current_folder = await docsVersionMenu.getCurrentVersionFolder(rootUrl);
+        const current_folder = docsVersionMenu.getCurrentVersionFolder(rootUrl);
         if (!current_folder || !(current_folder in version_data["labels"])) return;
         const current_version = version_data["labels"][current_folder];
         const menu = document.createElement('div');

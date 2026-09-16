@@ -129,3 +129,6 @@ dmypy.json
 # ctags
 tags
 uv.lock
+
+# Node
+node_modules/
