@@ -4,7 +4,7 @@
 
   var docsVersionMenu = {};
 
-  docsVersionMenu.urlExists = async function (url) {
+  docsVersionMenu._urlExists = async function (url) {
     try {
       const r = await fetch(url, {method: "HEAD"});
       if (r.status === 405 || r.status === 501) {
@@ -22,12 +22,26 @@
     const loc = new URL(window.location.href);
     let path = loc.pathname.replace(/\/[^/]*$/, '');
     while (true) {
-      if (await docsVersionMenu.urlExists(loc.origin + path + "/versions.json")) {
+      if (await docsVersionMenu._urlExists(loc.origin + path + "/versions.json")) {
         return loc.origin + path;
       }
       if (!path) throw new Error("docs-versions-menu: could not find versions.json");
       path = path.replace(/\/[^/]*$/, '');
     }
+  }
+
+  docsVersionMenu._loadVersionDataWithRootUrl = async function() {
+    const rootUrl = await docsVersionMenu.getRootUrl();
+    const json_file = rootUrl + "/versions.json";
+    const response = await fetch(json_file);
+    if (!response.ok)
+      throw new Error(response.status + ' ' + response.statusText);
+    const version_data = await response.json();
+    return [version_data, rootUrl];
+  }
+
+  docsVersionMenu.loadVersionData = async function() {
+    return (await docsVersionMenu._loadVersionDataWithRootUrl())[0];
   }
 
   docsVersionMenu.getCurrentVersionFolder = function (rootUrl) {
@@ -156,21 +170,11 @@
       githubProjectUrl: null
     }, options);
 
-    let rootUrl;
     try {
-      rootUrl = await docsVersionMenu.getRootUrl();
-    } catch(err) {
-      console.error(err.message);
-      return;
-    }
-    const json_file = rootUrl + "/versions.json";
-    try {
-      const response = await fetch(json_file);
-      if (!response.ok) throw new Error(response.status + ' ' + response.statusText);
-      const version_data = await response.json();
+      const [version_data, rootUrl] = await docsVersionMenu._loadVersionDataWithRootUrl();
       await docsVersionMenu._addVersionsMenu(version_data, rootUrl, options);
     } catch(err) {
-      console.error("docs-versions-menu: failed to load " + json_file, err);
+      console.error("docs-versions-menu: failed to load", err);
     }
 
     if (options.badgeOnly) {
