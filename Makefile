@@ -138,6 +138,9 @@ jscoverage: npminstall ## Runs JavaScript tests with coverage and writes an HTML
 	npm run coverage
 	@echo "open jscoverage/index.html"
 
+jsupdate-snapshots: npminstall ## Regenerates JavaScript test snapshots. Review the diff before committing!
+	npm run update-snapshots
+
 # How to execute notebook files
 %.ipynb.log: %.ipynb
 	$(UV) jupyter nbconvert --to notebook --execute --inplace \

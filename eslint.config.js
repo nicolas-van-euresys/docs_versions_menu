@@ -36,6 +36,9 @@ module.exports = [
             sourceType: 'commonjs',
             globals: {
                 ...globals.node,
+                // Tests assign a jsdom Document to global.document to
+                // simulate a browser environment.
+                document: 'readonly',
             },
         },
     },

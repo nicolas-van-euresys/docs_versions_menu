@@ -2,7 +2,9 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const path = require('node:path');
 const { JSDOM } = require('jsdom');
+const { html: beautifyHtml } = require('js-beautify');
 
 const docsVersionMenu = require(
     '../src/docs_versions_menu/_js/docs-versions-menu-lib.js'
@@ -10,6 +12,12 @@ const docsVersionMenu = require(
 
 function setWindowLocation(url) {
     global.window = new JSDOM('', { url }).window;
+}
+
+function setupDom(url) {
+    const dom = new JSDOM('', { url });
+    global.window = dom.window;
+    global.document = dom.window.document;
 }
 
 /**
@@ -205,4 +213,108 @@ test('getGithubProjectUrl', (t) => {
 
         assert.equal(url, null);
     });
+});
+
+test('addVersionsMenu', async (t) => {
+    t.afterEach(() => {
+        delete global.window;
+        delete global.document;
+    });
+
+    // A plain project with two versions, no downloads, no warnings.
+    const basicVersionData = {
+        versions: ['v1.0', 'v2.0'],
+        labels: { 'v1.0': 'v1.0', 'v2.0': 'v2.0' },
+        downloads: { 'v1.0': [], 'v2.0': [] },
+        warnings: { 'v1.0': [], 'v2.0': [] },
+        latest: 'v2.0',
+    };
+
+    // A project with a PDF download for each version, and the current
+    // version (v2.0) flagged as unreleased.
+    const richVersionData = {
+        versions: ['v1.0', 'v2.0'],
+        labels: { 'v1.0': 'v1.0', 'v2.0': 'v2.0 (dev)' },
+        downloads: {
+            'v1.0': [['PDF', 'v1.0/docs.pdf']],
+            'v2.0': [['PDF', 'v2.0/docs.pdf']],
+        },
+        warnings: { 'v1.0': [], 'v2.0': ['unreleased'] },
+        latest: 'v1.0',
+    };
+
+    const scenarios = [
+        {
+            name: 'default options (collapsed badge, no GitHub link)',
+            file: 'default-options.html',
+            rootUrl: 'https://example.com/docs',
+            pageUrl: 'https://example.com/docs/v2.0/index.html',
+            versionData: basicVersionData,
+            options: {},
+        },
+        {
+            name: 'expanded menu with a custom title',
+            file: 'expanded-menu-custom-title.html',
+            rootUrl: 'https://example.com/docs',
+            pageUrl: 'https://example.com/docs/v2.0/index.html',
+            versionData: basicVersionData,
+            options: { badgeOnly: false, menuTitle: 'My Project Docs' },
+        },
+        {
+            name: 'explicit GitHub project URL',
+            file: 'explicit-github-url.html',
+            rootUrl: 'https://example.com/docs',
+            pageUrl: 'https://example.com/docs/v2.0/index.html',
+            versionData: basicVersionData,
+            options: {
+                githubProjectUrl: 'https://github.com/acme/widget',
+            },
+        },
+        {
+            name: 'GitHub project URL auto-detected from a github.io root',
+            file: 'auto-detected-github-url.html',
+            rootUrl: 'https://acme.github.io/widget',
+            pageUrl: 'https://acme.github.io/widget/v2.0/index.html',
+            versionData: basicVersionData,
+            options: {},
+        },
+        {
+            name: 'GitHub section explicitly disabled on a github.io root',
+            file: 'github-url-disabled.html',
+            rootUrl: 'https://acme.github.io/widget',
+            pageUrl: 'https://acme.github.io/widget/v2.0/index.html',
+            versionData: basicVersionData,
+            options: { githubProjectUrl: '' },
+        },
+        {
+            name: 'downloads and an unreleased-version warning banner',
+            file: 'downloads-and-warning.html',
+            rootUrl: 'https://example.com/docs',
+            pageUrl: 'https://example.com/docs/v2.0/index.html',
+            versionData: richVersionData,
+            options: { badgeOnly: false },
+        },
+    ];
+
+    for (const scenario of scenarios) {
+        await t.test(scenario.name, async (t) => {
+            mockFetch(t, {
+                [`${scenario.rootUrl}/versions.json`]: scenario.versionData,
+            });
+            setupDom(scenario.pageUrl);
+            t.mock.method(console, 'error');
+
+            await docsVersionMenu.addVersionsMenu(scenario.options);
+
+            // Guards against _loadVersionDataWithRootUrl/_addVersionsMenu
+            // silently swallowing an error, which would otherwise leave
+            // us snapshotting an empty (but "passing") body.
+            assert.equal(console.error.mock.callCount(), 0);
+            t.assert.fileSnapshot(
+                beautifyHtml(document.body.innerHTML, { indent_size: 2 }),
+                path.join(__dirname, 'snapshots', scenario.file),
+                { serializers: [(html) => html] }
+            );
+        });
+    }
 });
