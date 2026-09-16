@@ -12,13 +12,25 @@ function setWindowLocation(url) {
     global.window = new JSDOM('', { url }).window;
 }
 
-function mockFetch(t, existingUrls) {
+/**
+ * Mocks the global fetch function for a fixed set of URLs.
+ *
+ * `responses` maps a URL to what fetch should resolve for it: `true` if
+ * the URL merely needs to exist (e.g. for a HEAD check), or a JSON-
+ * serializable value if the response's `.json()` needs to return
+ * something specific. Any URL not present in `responses` resolves as a
+ * 404.
+ */
+function mockFetch(t, responses) {
     t.mock.method(global, 'fetch', async (url) => {
-        const ok = existingUrls.includes(url);
+        if (!(url in responses)) {
+            return { ok: false, status: 404, statusText: 'Not Found' };
+        }
         return {
-            ok,
-            status: ok ? 200 : 404,
-            statusText: ok ? 'OK' : 'Not Found',
+            ok: true,
+            status: 200,
+            statusText: 'OK',
+            json: async () => responses[url],
         };
     });
 }
@@ -31,7 +43,9 @@ test('getRootUrl', async (t) => {
     await t.test(
         'walks up the URL path until fetch finds versions.json',
         async (t) => {
-            mockFetch(t, ['https://example.com/docs/v1.0/versions.json']);
+            mockFetch(t, {
+                'https://example.com/docs/v1.0/versions.json': true,
+            });
             setWindowLocation(
                 'https://example.com/docs/v1.0/guide/intro.html'
             );
@@ -45,8 +59,8 @@ test('getRootUrl', async (t) => {
     await t.test(
         'returns the origin when versions.json is at the root',
         async (t) => {
-            mockFetch(t, ['https://example.com/versions.json']);
-            setWindowLocation('https://example.com/index.html');
+            mockFetch(t, { 'https://example.com/versions.json': true });
+            setWindowLocation('https://example.com/');
 
             const rootUrl = await docsVersionMenu.getRootUrl();
 
@@ -57,7 +71,7 @@ test('getRootUrl', async (t) => {
     await t.test(
         'throws when no versions.json can be found anywhere on the path',
         async (t) => {
-            mockFetch(t, []);
+            mockFetch(t, {});
             setWindowLocation(
                 'https://example.com/docs/v1.0/guide/intro.html'
             );
@@ -68,4 +82,127 @@ test('getRootUrl', async (t) => {
             );
         }
     );
+});
+
+test('loadVersionData', async (t) => {
+    t.afterEach(() => {
+        delete global.window;
+    });
+
+    await t.test(
+        'finds the root URL and returns the parsed versions.json',
+        async (t) => {
+            const versionData = {
+                versions: ['v1.0'],
+                labels: { 'v1.0': 'v1.0' },
+                downloads: { 'v1.0': [] },
+                warnings: { 'v1.0': [] },
+                latest: 'v1.0',
+            };
+            mockFetch(t, {
+                'https://example.com/docs/versions.json': versionData,
+            });
+            setWindowLocation(
+                'https://example.com/docs/v1.0/guide/intro.html'
+            );
+
+            const data = await docsVersionMenu.loadVersionData();
+
+            assert.deepEqual(data, versionData);
+        }
+    );
+
+    await t.test(
+        'throws when versions.json cannot be fetched',
+        async (t) => {
+            setWindowLocation('https://example.com/docs/index.html');
+            t.mock.method(global, 'fetch', async (url, options) => {
+                if (options && options.method === 'HEAD') {
+                    // Let getRootUrl succeed, so the failure below comes
+                    // from actually fetching the file's content.
+                    return { ok: true, status: 200, statusText: 'OK' };
+                }
+                return {
+                    ok: false,
+                    status: 500,
+                    statusText: 'Internal Server Error',
+                };
+            });
+
+            await assert.rejects(
+                () => docsVersionMenu.loadVersionData(),
+                /500 Internal Server Error/
+            );
+        }
+    );
+});
+
+test('getCurrentVersionFolder', (t) => {
+    t.afterEach(() => {
+        delete global.window;
+    });
+
+    t.test('extracts the folder right after the root URL', () => {
+        setWindowLocation(
+            'https://example.com/docs/v1.0/guide/intro.html'
+        );
+
+        const folder = docsVersionMenu.getCurrentVersionFolder(
+            'https://example.com/docs'
+        );
+
+        assert.equal(folder, 'v1.0');
+    });
+
+    t.test(
+        'also works when the root URL is the origin itself',
+        () => {
+            setWindowLocation('https://example.com/v1.0/index.html');
+
+            const folder = docsVersionMenu.getCurrentVersionFolder(
+                'https://example.com'
+            );
+
+            assert.equal(folder, 'v1.0');
+        }
+    );
+});
+
+test('getGithubProjectUrl', (t) => {
+    t.test(
+        'derives the GitHub project URL from a github.io root URL',
+        () => {
+            const url = docsVersionMenu.getGithubProjectUrl(
+                'https://goerz.github.io/docs_versions_menu'
+            );
+
+            assert.equal(
+                url,
+                'https://github.com/goerz/docs_versions_menu'
+            );
+        }
+    );
+
+    t.test(
+        'still derives the project URL when the root URL has extra ' +
+            'path segments after the project name',
+        () => {
+            const url = docsVersionMenu.getGithubProjectUrl(
+                'https://goerz.github.io/docs_versions_menu/v1.0'
+            );
+
+            assert.equal(
+                url,
+                'https://github.com/goerz/docs_versions_menu'
+            );
+        }
+    );
+
+    t.test('returns null for a non-github.io root URL', () => {
+        const url = docsVersionMenu.getGithubProjectUrl(
+            'https://example.com/docs'
+        );
+
+        assert.equal(url, null);
+    });
 });
