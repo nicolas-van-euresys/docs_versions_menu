@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const { JSDOM } = require('jsdom');
 
 const docsVersionMenu = require(
-    '../src/docs_versions_menu/_js/docs-versions-menu.js'
+    '../src/docs_versions_menu/_js/docs-versions-menu-lib.js'
 );
 
 function setWindowLocation(url) {

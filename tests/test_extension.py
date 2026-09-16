@@ -29,10 +29,10 @@ def test_basic(app, status, warning):
     app.build()
     _build = Path(app.outdir)
     assert (_build / 'index.html').is_file()
-    assert (_build / '_static' / 'docs-versions-menu.js').is_file()
+    assert (_build / '_static' / 'docs-versions-menu-lib.js').is_file()
     assert (_build / '_static' / 'badge_only.css').is_file()
     html = (_build / 'index.html').read_text()
-    assert 'src="_static/docs-versions-menu.js' in html
+    assert 'src="_static/docs-versions-menu-lib.js' in html
 
 
 @pytest.mark.sphinx('html', testroot='rtdtheme')
@@ -45,31 +45,30 @@ def test_rtdtheme(app, status, warning):
     app.build()
     _build = Path(app.outdir)
     assert (_build / 'index.html').is_file()
-    assert (_build / '_static' / 'docs-versions-menu.js').is_file()
+    assert (_build / '_static' / 'docs-versions-menu-lib.js').is_file()
     assert not (_build / '_static' / 'badge_only.css').is_file()
     html = (_build / 'index.html').read_text()
-    assert 'src="_static/docs-versions-menu.js' in html
-    assert 'menuTitle: "Docs"' in html
+    assert 'src="_static/docs-versions-menu-lib.js' in html
 
 
 @pytest.mark.sphinx('html', testroot='custom')
 def test_custom(app, status, warning):
     """Test building documentation with the docs_versions_menu extension.
 
-    This tests a configuration with full customization (a custom template for
-    the injected configuration script, and a custom docs_versions_menu_conf
-    dict in conf.py; ./test_extension/roots/test-custom/
+    This tests a configuration with full customization (custom template for the
+    JS file, and a custom docs_versions_menu_conf dict in conf.py;
+    ./test_extension/roots/test-custom/
     """
     app.build()
     _build = Path(app.outdir)
     assert (_build / 'index.html').is_file()
-    assert (_build / '_static' / 'docs-versions-menu.js').is_file()
+    assert (_build / '_static' / 'docs-versions-menu-lib.js').is_file()
     assert not (_build / '_static' / 'badge_only.css').is_file()
     html = (_build / 'index.html').read_text()
-    assert 'src="_static/docs-versions-menu.js' in html
-    assert 'badgeOnly: false' in html
-    assert 'menuTitle: "Docs"' in html
+    assert 'src="_static/docs-versions-menu-lib.js' in html
+    assert "var my_var = 'custom variable';" in html
     assert (
-        'githubProjectUrl: "https://github.com/goerz/docs_versions_menu"'
+        "var github_project_url = 'https://github.com/goerz/docs_versions_menu';"
         in html
     )
+    assert "var menu_title = 'Docs'" in html
