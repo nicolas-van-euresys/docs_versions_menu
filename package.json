@@ -14,9 +14,14 @@
   "author": "Michael Goerz",
   "type": "commonjs",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "lint": "eslint eslint.config.js src/docs_versions_menu/_js jstests"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.10.0",
+    "eslint-plugin-es-x": "^10.0.0",
+    "globals": "^17.12.0",
     "jsdom": "^30.0.1"
   }
 }

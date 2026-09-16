@@ -187,10 +187,6 @@
     }
   }
 
-  // TODO: remove
-  //document.addEventListener('DOMContentLoaded', addVersionsMenu);
-
-
   // Node.js or browser
   if (typeof module !== 'undefined') module.exports = docsVersionMenu;
   else root.docsVersionMenu = docsVersionMenu;

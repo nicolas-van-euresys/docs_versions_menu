@@ -131,6 +131,9 @@ npminstall: ## Installs npm dependencies. Node >= 24 must be installed
 jstest: npminstall ## Runs JavaScript tests
 	npm run test
 
+jslint: npminstall ## Lints the JavaScript code
+	npm run lint
+
 # How to execute notebook files
 %.ipynb.log: %.ipynb
 	$(UV) jupyter nbconvert --to notebook --execute --inplace \

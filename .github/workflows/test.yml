@@ -64,4 +64,5 @@ jobs:
 
       - name: Run Commands
         run:  |
+          make jslint
           make jstest
