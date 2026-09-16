@@ -8,6 +8,14 @@ Unreleased
 
 * Fixed a white scrollbar-gutter bar showing on the right edge of the expanded
   versions menu with the ``sphinx_rtd_theme``
+* Alters the ``docs-versions-menu.js_t`` template to become an initialisation script
+  for the docs_versions_menu JavaScript part now mainly located in the
+  ``docs-versions-menu-lib.js`` static file rather than fully containing the whole
+  JavaScript like previously. That initialisation script is also now included in the
+  HTML of every page. Please note that, while effort was made to attempt to provide
+  backward compatibility to users previously overriding the ``docs-versions-menu.js_t``
+  template, it is recommended to test if those overrides still work correctly and
+  adapt the code if necessary.
 
 
 0.6.0 (2026-06-30)
