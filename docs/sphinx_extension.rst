@@ -14,7 +14,7 @@ See the Docs Versions Menu's |conf_py|_ for an example.
 .. |conf_py| replace:: ``conf.py``
 .. _conf_py: https://github.com/goerz/docs_versions_menu/blob/master/docs/conf.py
 
-This will inject a javascript file ``docs-versions-menu.js`` into every
+This will inject a javascript file ``docs-versions-menu-lib.js`` into every
 generated page of the documentation. When the page is loaded, the script
 searches upward from the current URL until it finds a ``versions.json`` file,
 then renders the versions menu from that data.
@@ -45,7 +45,7 @@ RTD that doesn't use the default theme).
 The theme is automatically detected based on the value of :confval:`html_theme`
 in the Sphinx ``conf.py`` file. If this is anything other than
 ``"sphinx_rtd_theme"``, the badge-style versions menu is used. This implies
-that in addition to the javascript file ``docs-versions-menu.js``, a
+that in addition to the javascript file ``docs-versions-menu-lib.js``, a
 ``badge_only.css`` file as well as a number of `Font Awesome`_ files will be
 included in the generated documentation.
 

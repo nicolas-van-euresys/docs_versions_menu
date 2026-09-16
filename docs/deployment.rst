@@ -176,7 +176,7 @@ Upgrading ``docs-versions-menu`` to a version with an improved or incompatible
 script (for example, one that changes the internal data structure of
 ``versions.json``, or that fixes how the menu locates ``versions.json``) may
 require updating these per-folder scripts by hand. To do so, build the docs once
-with the new version, then copy the resulting ``_static/docs-versions-menu.js``
+with the new version, then copy the resulting ``_static/docs-versions-menu-lib.js``
 into the ``_static`` subfolder of each existing folder. Keep each folder's
 existing filename: folders deployed with older releases may use a different name
 (e.g., ``doctr-versions-menu.js``) that their HTML still references.
