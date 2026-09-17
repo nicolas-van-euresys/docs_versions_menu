@@ -65,7 +65,7 @@ jobs:
       - name: Run Commands
         run:  |
           make jslint
-          make jstest
+          make jscoverage
 
       - uses: codecov/codecov-action@v7
         with:
