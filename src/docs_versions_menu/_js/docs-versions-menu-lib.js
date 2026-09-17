@@ -47,8 +47,20 @@
   }
 
   /**
+   * @typedef {{
+   *   downloads: Object<string, Array<[string, string]>>,
+   *   folders: string[],
+   *   labels: Object<string, string>,
+   *   latest: (string|null),
+   *   versions: string[],
+   *   warnings: Object<string, string[]>,
+   *   "default-branch": string,
+   * }} VersionData
+   */
+
+  /**
    * Loads the versions.json file and returns its content. Automatically calls getRootUrl.
-   * @returns The versions.json file content.
+   * @returns {Promise<VersionData>} The versions.json file content.
    */
   docsVersionMenu.loadVersionData = async function() {
     return (await docsVersionMenu._loadVersionDataWithRootUrl())[0];
@@ -210,7 +222,7 @@
    *     convention; if that detection fails, the section is omitted.
    *     Passing an empty string explicitly disables the section, without
    *     attempting auto-detection.
-   * @returns The versions.json file content.
+   * @returns {Promise<VersionData>} The versions.json file content.
    */
   docsVersionMenu.addVersionsMenu = async function(options) {
     // set default values
