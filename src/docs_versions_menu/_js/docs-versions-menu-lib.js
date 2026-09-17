@@ -4,6 +4,10 @@
 
   var docsVersionMenu = {};
 
+  /**
+   * @param {string} url
+   * @returns {Promise<boolean>}
+   */
   docsVersionMenu._urlExists = async function (url) {
     try {
       const r = await fetch(url, {method: "HEAD"});
@@ -36,6 +40,9 @@
     }
   }
 
+  /**
+   * @returns {Promise<[VersionData, string]>}
+   */
   docsVersionMenu._loadVersionDataWithRootUrl = async function() {
     const rootUrl = await docsVersionMenu.getRootUrl();
     const json_file = rootUrl + "/versions.json";
@@ -90,6 +97,12 @@
     return null;
   }
 
+  /**
+   * @param {VersionData} version_data
+   * @param {string} rootUrl
+   * @param {Required<MenuOptions>} options
+   * @returns {void}
+   */
   docsVersionMenu._addVersionsMenu = function (version_data, rootUrl, options) {
     // The menu was reverse-engineered from the RTD websites, so it's very
     // specific to the sphinx_rtd_theme
@@ -196,6 +209,26 @@
   }
 
   /**
+   * @typedef {Object} MenuOptions
+   * @property {boolean} [badgeOnly=true] - If true, the menu is rendered
+   *     as a small collapsed badge (in the style of Read the Docs) that
+   *     expands into the full menu when clicked. If false, the menu is
+   *     rendered in a way allowing its integration in sphinx_rtd_theme.
+   * @property {string} [menuTitle="Docs"] - Label displayed in front of
+   *     the current version (e.g. "Docs v1.2.0"). Only shown when
+   *     `badgeOnly` is false.
+   * @property {?string} [githubProjectUrl=null] - URL of the project's
+   *     GitHub repository. When set to a non-empty string, an "On GitHub"
+   *     section is added to the menu, linking to the project home and its
+   *     issue tracker. When left as `null` (the default), the URL is
+   *     instead auto-detected from the root URL, assuming it follows the
+   *     `<user-or-org>.github.io/<project>` GitHub Pages convention; if
+   *     that detection fails, the section is omitted. Passing an empty
+   *     string explicitly disables the section, without attempting
+   *     auto-detection.
+   */
+
+  /**
    * Displays the version menu.
    *
    * Loads versions.json (via _loadVersionDataWithRootUrl), builds the
@@ -204,24 +237,9 @@
    * the current version is flagged in versions.json as outdated,
    * unreleased, or a pre-release.
    *
-   * @param {Object} [options] - Configuration for the version menu. Any
-   *     option that is omitted falls back to its default value below.
-   * @param {boolean} [options.badgeOnly=true] - If true, the menu is
-   *     rendered as a small collapsed badge (in the style of Read the
-   *     Docs) that expands into the full menu when clicked. If false,
-   *     the menu is rendered in a way allowing its integration in sphinx_rtd_theme.
-   * @param {string} [options.menuTitle="Docs"] - Label displayed in front
-   *     of the current version (e.g. "Docs v1.2.0"). Only shown when
-   *     `badgeOnly` is false.
-   * @param {string} [options.githubProjectUrl=null] - URL of the
-   *     project's GitHub repository. When set to a non-empty string, an
-   *     "On GitHub" section is added to the menu, linking to the project
-   *     home and its issue tracker. When left as `null` (the default),
-   *     the URL is instead auto-detected from the root URL, assuming it
-   *     follows the `<user-or-org>.github.io/<project>` GitHub Pages
-   *     convention; if that detection fails, the section is omitted.
-   *     Passing an empty string explicitly disables the section, without
-   *     attempting auto-detection.
+   * @param {MenuOptions} [options] - Configuration for the version menu.
+   *     Any option that is omitted falls back to its default value (see
+   *     MenuOptions).
    * @returns {Promise<VersionData>} The versions.json file content.
    */
   docsVersionMenu.addVersionsMenu = async function(options) {
