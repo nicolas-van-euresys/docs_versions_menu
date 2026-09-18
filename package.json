@@ -13,6 +13,9 @@
   "license": "MIT",
   "author": "Michael Goerz",
   "type": "commonjs",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "test": "c8 --reports-dir=jscoverage --reporter=text --reporter=lcov node --test",
     "coverage": "c8 --reports-dir=jscoverage --reporter=text --reporter=html node --test",

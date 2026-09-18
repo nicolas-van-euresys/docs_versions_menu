@@ -125,7 +125,7 @@ clean:  ## Remove build, test, and documentation artifacts
 distclean: clean  ## Remove all generated files, including the .venv environments
 	rm -rf .venv uv.lock .tox
 
-npminstall: ## Installs npm dependencies. Node >= 24 must be installed
+npminstall: ## Installs npm dependencies. Fails unless Node >= 24 is installed
 	npm install
 
 jstest: npminstall ## Runs JavaScript tests (with a coverage summary)

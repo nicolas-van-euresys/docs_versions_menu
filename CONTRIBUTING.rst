@@ -58,16 +58,20 @@ Contributing to the package's development requires that you have uv_ installed.
 uv handles Python interpreter management and virtual environments automatically.
 The recommended way to install uv is via the `official installer`_.
 
-Node.js_ (version 24 or later) should also, facultatively, be installed whenever
-altering the JavaScript part of this project as it is needed if to run the test
-suite for the Sphinx extension's client-side JavaScript (see Testing_ below).
-Please note that, while facultative for maintainers only altering the Python part,
-the CI still runs tests using Node.js.
+Node.js_ (version 24 or later, as declared in the ``engines`` field of
+``package.json``) is needed only to run the test suite for the Sphinx
+extension's client-side JavaScript (see Testing_ below). Install it if you
+intend to modify that JavaScript. Maintainers working only on the Python part
+can skip it, but note that the CI runs the JavaScript tests in any case. A
+Node version manager such as fnm_ is the recommended way to install Node.js,
+and to keep the version used for a particular project separate from any
+system-wide installation.
 
 
 .. _uv: https://docs.astral.sh/uv/
 .. _official installer: https://docs.astral.sh/uv/getting-started/installation/
 .. _Node.js: https://nodejs.org/
+.. _fnm: https://github.com/Schniz/fnm
 
 
 Pull Requests
@@ -174,7 +178,9 @@ The Sphinx extension's client-side JavaScript (in
 ``src/docs_versions_menu/_js/``) has its own test suite, based on
 node:test_. This is *optional*: it requires Node.js (version 24 or later)
 to be installed, but is not otherwise necessary to contribute to the
-package. From a checkout of the ``docs_versions_menu`` repository you can use
+package. An older Node.js aborts ``make jstest`` with an error naming the
+required version. From a checkout of the ``docs_versions_menu`` repository
+you can use
 
 .. code-block:: shell
 
