@@ -11,7 +11,8 @@ Unreleased
 * Alters the ``docs-versions-menu.js_t`` template to become an initialisation script
   for the docs_versions_menu JavaScript part now mainly located in the
   ``docs-versions-menu-lib.js`` static file rather than fully containing the whole
-  JavaScript like previously. Users previously overriding that template must adapt
+  JavaScript like previously. That initialisation script is also now included in the
+  HTML of every page. Users previously overriding that template must adapt
   their template override when updating to this version.
 
 
