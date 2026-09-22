@@ -143,6 +143,34 @@ test('loadVersionData', async (t) => {
             );
         }
     );
+
+    await t.test(
+        'uses the given rootUrl without calling getRootUrl',
+        async (t) => {
+            const versionData = {
+                versions: ['v1.0'],
+                labels: { 'v1.0': 'v1.0' },
+                downloads: { 'v1.0': [] },
+                warnings: { 'v1.0': [] },
+                latest: 'v1.0',
+            };
+            mockFetch(t, {
+                'https://example.com/docs/versions.json': versionData,
+            });
+            setWindowLocation(
+                'https://example.com/docs/v1.0/guide/intro.html'
+            );
+
+            const data = await docsVersionMenu.loadVersionData(
+                'https://example.com/docs'
+            );
+
+            assert.deepEqual(data, versionData);
+            // Only the versions.json GET, no HEAD request from
+            // getRootUrl.
+            assert.equal(global.fetch.mock.callCount(), 1);
+        }
+    );
 });
 
 test('getCurrentVersionFolder', (t) => {

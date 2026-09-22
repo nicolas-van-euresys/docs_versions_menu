@@ -41,19 +41,6 @@
   }
 
   /**
-   * @returns {Promise<[VersionData, string]>}
-   */
-  docsVersionMenu._loadVersionDataWithRootUrl = async function() {
-    const rootUrl = await docsVersionMenu.getRootUrl();
-    const json_file = rootUrl + "/versions.json";
-    const response = await fetch(json_file);
-    if (!response.ok)
-      throw new Error(response.status + ' ' + response.statusText);
-    const version_data = await response.json();
-    return [version_data, rootUrl];
-  }
-
-  /**
    * @typedef {{
    *   downloads: Object<string, Array<[string, string]>>,
    *   folders: string[],
@@ -67,15 +54,25 @@
 
   /**
    * Loads the versions.json file and returns its content. Automatically calls getRootUrl.
+   * @param {string?} rootUrl The root url. If not specified `getRootUrl()` will be called to acquire it.
    * @returns {Promise<VersionData>} The versions.json file content.
    */
-  docsVersionMenu.loadVersionData = async function() {
-    return (await docsVersionMenu._loadVersionDataWithRootUrl())[0];
+  docsVersionMenu.loadVersionData = async function(rootUrl) {
+    if (!rootUrl)
+    {
+      rootUrl = await docsVersionMenu.getRootUrl();
+    }
+    const json_file = rootUrl + "/versions.json";
+    const response = await fetch(json_file);
+    if (!response.ok)
+      throw new Error(response.status + ' ' + response.statusText);
+    const version_data = await response.json();
+    return version_data;
   }
 
   /**
    * Returns the current version folder.
-   * @param {*} rootUrl The root url.
+   * @param {string} rootUrl The root url.
    * @returns The current version folder.
    */
   docsVersionMenu.getCurrentVersionFolder = function (rootUrl) {
@@ -86,7 +83,7 @@
    * Returns the URL corresponding to the Github project if the current page uses a github.io URL.
    *
    * Returns null in all other cases.
-   * @param {string} rootUrl
+   * @param {string} rootUrl The root url.
    * @returns The URL corresponding to the Github project or null.
    */
   docsVersionMenu.getGithubProjectUrl = function (rootUrl) {
@@ -231,7 +228,7 @@
   /**
    * Displays the version menu.
    *
-   * Loads versions.json (via _loadVersionDataWithRootUrl), builds the
+   * Loads versions.json (via `loadVersionData`), builds the
    * version-selector menu, and inserts it at the end of the page body.
    * Also inserts a warning banner near the top of the document body if
    * the current version is flagged in versions.json as outdated,
@@ -250,7 +247,8 @@
       githubProjectUrl: null
     }, options);
 
-    const [version_data, rootUrl] = await docsVersionMenu._loadVersionDataWithRootUrl();
+    const rootUrl = await docsVersionMenu.getRootUrl();
+    const version_data = await docsVersionMenu.loadVersionData(rootUrl);
     docsVersionMenu._addVersionsMenu(version_data, rootUrl, options);
 
     if (options.badgeOnly) {
