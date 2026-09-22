@@ -86,7 +86,7 @@
    * @param {string} rootUrl The root url.
    * @returns The URL corresponding to the Github project or null.
    */
-  docsVersionMenu.getGithubProjectUrl = function (rootUrl) {
+  docsVersionMenu._getGithubProjectUrl = function (rootUrl) {
     const match = rootUrl.match(/([\w\d-]+)\.github\.io\/([\w\d-]+)/);
     if (match !== null) {
       return "https://github.com/" + match[1] + "/" + match[2];
@@ -156,7 +156,7 @@
                       + download_label + "</a></dd>";
       }
     }
-    const github_project_url = options.githubProjectUrl ?? docsVersionMenu.getGithubProjectUrl(rootUrl);
+    const github_project_url = options.githubProjectUrl ?? docsVersionMenu._getGithubProjectUrl(rootUrl);
     if (github_project_url !== null && github_project_url.length > 0){
       inner_html +=
             "<dt>On GitHub</dt>"

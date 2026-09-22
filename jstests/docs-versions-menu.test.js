@@ -204,11 +204,11 @@ test('getCurrentVersionFolder', (t) => {
     );
 });
 
-test('getGithubProjectUrl', (t) => {
+test('_getGithubProjectUrl', (t) => {
     t.test(
         'derives the GitHub project URL from a github.io root URL',
         () => {
-            const url = docsVersionMenu.getGithubProjectUrl(
+            const url = docsVersionMenu._getGithubProjectUrl(
                 'https://goerz.github.io/docs_versions_menu'
             );
 
@@ -223,7 +223,7 @@ test('getGithubProjectUrl', (t) => {
         'still derives the project URL when the root URL has extra ' +
             'path segments after the project name',
         () => {
-            const url = docsVersionMenu.getGithubProjectUrl(
+            const url = docsVersionMenu._getGithubProjectUrl(
                 'https://goerz.github.io/docs_versions_menu/v1.0'
             );
 
@@ -235,7 +235,7 @@ test('getGithubProjectUrl', (t) => {
     );
 
     t.test('returns null for a non-github.io root URL', () => {
-        const url = docsVersionMenu.getGithubProjectUrl(
+        const url = docsVersionMenu._getGithubProjectUrl(
             'https://example.com/docs'
         );
 
