@@ -72,3 +72,32 @@ def test_custom(app, status, warning):
         in html
     )
     assert "var menu_title = 'Docs'" in html
+
+
+@pytest.mark.sphinx('html', testroot='projectlinks')
+def test_project_links(app, status, warning):
+    """Test building documentation with a custom ``project_links`` setting.
+
+    This tests the default ``docs-versions-menu.js_t`` template (unlike
+    ``test_custom`` above, which overrides it with a legacy custom
+    template), and that both ``project_links`` and ``github_project_url``
+    from ``docs_versions_menu_conf`` are forwarded to the rendered
+    JavaScript; see ./test_extension/roots/test-projectlinks/
+    """
+    app.build()
+    _build = Path(app.outdir)
+    assert (_build / 'index.html').is_file()
+    html = (_build / 'index.html').read_text()
+    assert 'src="_static/docs-versions-menu-lib.js' in html
+    assert (
+        'githubProjectUrl: "https://github.com/goerz/docs_versions_menu"'
+        in html
+    )
+    assert '"On GitLab"' in html
+    assert '"Project Home": "https://gitlab.example.com/acme/widget"' in html
+    assert (
+        '"Issues": "https://gitlab.example.com/acme/widget/-/issues"' in html
+    )
+    # `project_links` insertion order must be preserved (not resorted
+    # alphabetically, which would put "Issues" before "Project Home").
+    assert html.index('"Project Home"') < html.index('"Issues"')

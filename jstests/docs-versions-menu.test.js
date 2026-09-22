@@ -243,6 +243,111 @@ test('_getGithubProjectUrl', (t) => {
     });
 });
 
+test('_buildProjectLinksSections', (t) => {
+    const projectLinks = {
+        'On GitLab': {
+            'Project Home': 'https://gitlab.example.com/acme/widget',
+            Issues: 'https://gitlab.example.com/acme/widget/-/issues',
+        },
+    };
+
+    t.test(
+        'renders projectLinks sections, and auto-detects a GitHub ' +
+            'section when githubProjectUrl and projectLinks are both unset',
+        () => {
+            const sections = docsVersionMenu._buildProjectLinksSections(
+                { githubProjectUrl: null, projectLinks: null },
+                'https://acme.github.io/widget'
+            );
+
+            assert.deepEqual(sections, [
+                [
+                    'On GitHub',
+                    [
+                        [
+                            'Project Home',
+                            'https://github.com/acme/widget',
+                        ],
+                        [
+                            'Issues',
+                            'https://github.com/acme/widget/issues',
+                        ],
+                    ],
+                ],
+            ]);
+        }
+    );
+
+    t.test(
+        'suppresses GitHub auto-detection when projectLinks is set',
+        () => {
+            const sections = docsVersionMenu._buildProjectLinksSections(
+                { githubProjectUrl: null, projectLinks },
+                'https://acme.github.io/widget'
+            );
+
+            assert.deepEqual(sections, [
+                [
+                    'On GitLab',
+                    [
+                        [
+                            'Project Home',
+                            'https://gitlab.example.com/acme/widget',
+                        ],
+                        [
+                            'Issues',
+                            'https://gitlab.example.com/acme/widget/-/issues',
+                        ],
+                    ],
+                ],
+            ]);
+        }
+    );
+
+    t.test(
+        'appends an explicit githubProjectUrl section after the ' +
+            'projectLinks sections',
+        () => {
+            const sections = docsVersionMenu._buildProjectLinksSections(
+                {
+                    githubProjectUrl: 'https://github.com/acme/widget',
+                    projectLinks,
+                },
+                'https://example.com/docs'
+            );
+
+            assert.deepEqual(sections, [
+                [
+                    'On GitLab',
+                    [
+                        [
+                            'Project Home',
+                            'https://gitlab.example.com/acme/widget',
+                        ],
+                        [
+                            'Issues',
+                            'https://gitlab.example.com/acme/widget/-/issues',
+                        ],
+                    ],
+                ],
+                [
+                    'On GitHub',
+                    [
+                        [
+                            'Project Home',
+                            'https://github.com/acme/widget',
+                        ],
+                        [
+                            'Issues',
+                            'https://github.com/acme/widget/issues',
+                        ],
+                    ],
+                ],
+            ]);
+        }
+    );
+});
+
 test('addVersionsMenu', async (t) => {
     t.afterEach(() => {
         delete global.window;
@@ -321,6 +426,43 @@ test('addVersionsMenu', async (t) => {
             pageUrl: 'https://example.com/docs/v2.0/index.html',
             versionData: richVersionData,
             options: { badgeOnly: false },
+        },
+        {
+            name:
+                'custom project links, with GitHub auto-detection ' +
+                'suppressed on a github.io root',
+            file: 'project-links.html',
+            rootUrl: 'https://acme.github.io/widget',
+            pageUrl: 'https://acme.github.io/widget/v2.0/index.html',
+            versionData: basicVersionData,
+            options: {
+                projectLinks: {
+                    'On GitLab': {
+                        'Project Home':
+                            'https://gitlab.example.com/acme/widget',
+                        Issues:
+                            'https://gitlab.example.com/acme/widget/-/issues',
+                    },
+                },
+            },
+        },
+        {
+            name:
+                'custom project links combined with an explicit ' +
+                'GitHub project URL',
+            file: 'project-links-and-github-url.html',
+            rootUrl: 'https://example.com/docs',
+            pageUrl: 'https://example.com/docs/v2.0/index.html',
+            versionData: basicVersionData,
+            options: {
+                githubProjectUrl: 'https://github.com/acme/widget',
+                projectLinks: {
+                    'On GitLab': {
+                        'Project Home':
+                            'https://gitlab.example.com/acme/widget',
+                    },
+                },
+            },
         },
     ];
 

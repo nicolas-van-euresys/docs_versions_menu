@@ -62,9 +62,31 @@ The settings for the Sphinx extensions are taken from a dict
 
 The dict may contain the following keys:
 
-* ``github_project_url`` (str): The full URL to the project on Github, e.g. ``"https://github.com/user/project"``. When set, the menu shows links to the project home and issue tracker. Defaults to ``None`` (no Github links shown).
+* ``project_links`` (dict): A mapping of section headings to a mapping of
+  link labels to URLs, added as extra sections to the versions menu, below
+  "Downloads". For example::
+
+      docs_versions_menu_conf = {
+          'project_links': {
+              'On GitLab': {
+                  'Project Home': 'https://gitlab.example.com/user/project',
+                  'Issues': 'https://gitlab.example.com/user/project/-/issues',
+                  'Wiki': 'https://gitlab.example.com/user/project/-/wikis',
+              }
+          },
+      }
+
+  Setting ``project_links`` disables the ``github_project_url``
+  auto-detection described below. Defaults to ``None`` (no extra sections).
 * ``badge_only`` (bool): Whether to render the version menu as a "badge" in the lower right corner (defaults to True unless :confval:`html_theme` is ``"sphinx_rtd_theme"``)
 * ``menu_title`` (str): The label to be shown in to left corner of the full versions menu (if not ``badge_only``). Defaults to "Docs".
+* ``github_project_url`` (str): **Deprecated**, use ``project_links``
+  instead. The full URL to the project on Github, e.g.
+  ``"https://github.com/user/project"``. When set, the menu shows an "On
+  GitHub" section linking to the project home and issue tracker, added
+  after any sections from ``project_links``. Defaults to ``None``, in which
+  case the URL is auto-detected from a ``<user-or-org>.github.io/<project>``
+  root URL, unless ``project_links`` is set.
 
 Do not use the setting ``badge_only=False`` together with the
 ``sphinx_rtd_theme``. In order to avoid the ``badge_only.css`` and font files

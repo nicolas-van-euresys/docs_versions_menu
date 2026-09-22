@@ -14,6 +14,14 @@ Unreleased
   JavaScript like previously. That initialisation script is also now included in the
   HTML of every page. Users previously overriding that template must adapt
   their template override when updating to this version.
+* Added a ``project_links`` key to ``docs_versions_menu_conf``, allowing
+  custom sections of links (e.g., for a project hosted on GitLab) to be
+  added to the versions menu without needing a custom JavaScript template.
+  Setting ``project_links``, or explicitly setting ``github_project_url``,
+  disables the automatic Github URL auto-detection from a ``github.io``
+  root URL.
+* Deprecated the ``github_project_url`` key in ``docs_versions_menu_conf``
+  in favor of ``project_links``.
 
 
 0.6.0 (2026-06-30)

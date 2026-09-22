@@ -29,8 +29,12 @@ def add_versions_menu_js_file(app):
 
     template_path.append(str(Path(__file__).parent / '_template'))
     renderer = SphinxRenderer(template_path=template_path)
+    # Jinja's `tojson` filter sorts dict keys alphabetically by default,
+    # which would silently reorder the sections/links in `project_links`.
+    renderer.env.policies['json.dumps_kwargs'] = {'sort_keys': False}
     context = dict(
         github_project_url=None,
+        project_links=None,
         badge_only=(app.config.html_theme != 'sphinx_rtd_theme'),
         menu_title="Docs",
     )

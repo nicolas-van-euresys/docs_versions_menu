@@ -95,6 +95,45 @@
   }
 
   /**
+   * @typedef {Object<string, Object<string, string>>} ProjectLinks
+   */
+
+  /**
+   * Builds the link sections (beyond "Versions" and "Downloads") to render
+   * in the menu: the sections from `options.projectLinks`, if any, followed
+   * by an "On GitHub" section if a Github project URL is available.
+   *
+   * The Github project URL is `options.githubProjectUrl` if explicitly set;
+   * otherwise, unless `options.projectLinks` is also set, it is
+   * auto-detected from `rootUrl` (see `_getGithubProjectUrl`).
+   * @param {Required<MenuOptions>} options
+   * @param {string} rootUrl
+   * @returns {Array<[string, Array<[string, string]>]>}
+   */
+  docsVersionMenu._buildProjectLinksSections = function (options, rootUrl) {
+    const sections = [];
+    if (options.projectLinks) {
+      for (const [heading, links] of Object.entries(options.projectLinks)) {
+        sections.push([heading, Object.entries(links)]);
+      }
+    }
+    let github_project_url = options.githubProjectUrl;
+    if (github_project_url == null && options.projectLinks == null) {
+      github_project_url = docsVersionMenu._getGithubProjectUrl(rootUrl);
+    }
+    if (github_project_url !== null && github_project_url.length > 0) {
+      sections.push([
+        'On GitHub',
+        [
+          ['Project Home', github_project_url],
+          ['Issues', github_project_url + '/issues'],
+        ],
+      ]);
+    }
+    return sections;
+  }
+
+  /**
    * @param {VersionData} version_data
    * @param {string} rootUrl
    * @param {Required<MenuOptions>} options
@@ -156,12 +195,11 @@
                       + download_label + "</a></dd>";
       }
     }
-    const github_project_url = options.githubProjectUrl ?? docsVersionMenu._getGithubProjectUrl(rootUrl);
-    if (github_project_url !== null && github_project_url.length > 0){
-      inner_html +=
-            "<dt>On GitHub</dt>"
-            + "<dd><a href='" + github_project_url + "'>Project Home</a></dd>"
-            + "<dd><a href='" + github_project_url + "/issues'>Issues</a></dd>";
+    for (const [heading, links] of docsVersionMenu._buildProjectLinksSections(options, rootUrl)) {
+      inner_html += "<dt>" + heading + "</dt>";
+      for (const [label, url] of links) {
+        inner_html += "<dd><a href='" + url + "'>" + label + "</a></dd>";
+      }
     }
     inner_html +=
           "</dl>" +
@@ -214,15 +252,25 @@
    * @property {string} [menuTitle="Docs"] - Label displayed in front of
    *     the current version (e.g. "Docs v1.2.0"). Only shown when
    *     `badgeOnly` is false.
-   * @property {?string} [githubProjectUrl=null] - URL of the project's
-   *     GitHub repository. When set to a non-empty string, an "On GitHub"
-   *     section is added to the menu, linking to the project home and its
-   *     issue tracker. When left as `null` (the default), the URL is
-   *     instead auto-detected from the root URL, assuming it follows the
-   *     `<user-or-org>.github.io/<project>` GitHub Pages convention; if
-   *     that detection fails, the section is omitted. Passing an empty
-   *     string explicitly disables the section, without attempting
-   *     auto-detection.
+   * @property {?ProjectLinks} [projectLinks=null] - Custom sections of
+   *     links added to the menu, below "Downloads". Each key is a section
+   *     heading (rendered as a `<dt>`), mapping to an object of link
+   *     labels to URLs (each rendered as a `<dd><a>`). Setting this option
+   *     (even to an empty object) disables the automatic auto-detection of
+   *     a Github project URL described for `githubProjectUrl`; set
+   *     `githubProjectUrl` explicitly alongside `projectLinks` to still
+   *     include an "On GitHub" section, rendered after the sections from
+   *     `projectLinks`.
+   * @property {?string} [githubProjectUrl=null] - **Deprecated**: use
+   *     `projectLinks` instead. URL of the project's GitHub repository.
+   *     When set to a non-empty string, an "On GitHub" section is added to
+   *     the menu, linking to the project home and its issue tracker. When
+   *     left as `null` (the default) and `projectLinks` is also left
+   *     unset, the URL is instead auto-detected from the root URL,
+   *     assuming it follows the `<user-or-org>.github.io/<project>` GitHub
+   *     Pages convention; if that detection fails, the section is omitted.
+   *     Passing an empty string explicitly disables the section, without
+   *     attempting auto-detection.
    */
 
   /**
@@ -244,7 +292,8 @@
     options = Object.assign({
       badgeOnly: true,
       menuTitle: "Docs",
-      githubProjectUrl: null
+      projectLinks: null,
+      githubProjectUrl: null,
     }, options);
 
     const rootUrl = await docsVersionMenu.getRootUrl();
