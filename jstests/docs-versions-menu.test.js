@@ -178,7 +178,7 @@ test('getCurrentVersionFolder', (t) => {
         delete global.window;
     });
 
-    t.test('extracts the folder right after the root URL', () => {
+    t.test('extracts the folder right after the root URL (no-translations, default)', () => {
         setWindowLocation(
             'https://example.com/docs/v1.0/guide/intro.html'
         );
@@ -191,12 +191,40 @@ test('getCurrentVersionFolder', (t) => {
     });
 
     t.test(
-        'also works when the root URL is the origin itself',
+        'also works when the root URL is the origin itself (no-translations, default)',
         () => {
             setWindowLocation('https://example.com/v1.0/index.html');
 
             const folder = docsVersionMenu.getCurrentVersionFolder(
                 'https://example.com'
+            );
+
+            assert.equal(folder, 'v1.0');
+        }
+    );
+
+    t.test(
+        'returns the first segment for explicit no-translations scheme',
+        () => {
+            setWindowLocation('https://example.com/docs/v1.0/index.html');
+
+            const folder = docsVersionMenu.getCurrentVersionFolder(
+                'https://example.com/docs',
+                'no-translations'
+            );
+
+            assert.equal(folder, 'v1.0');
+        }
+    );
+
+    t.test(
+        'returns the second segment (skipping language) for translations scheme',
+        () => {
+            setWindowLocation('https://example.com/docs/en/v1.0/index.html');
+
+            const folder = docsVersionMenu.getCurrentVersionFolder(
+                'https://example.com/docs',
+                'translations'
             );
 
             assert.equal(folder, 'v1.0');
@@ -525,33 +553,6 @@ test('_pathParts', (t) => {
     });
 });
 
-test('_getCurrentVersionFolderForScheme', (t) => {
-    t.afterEach(() => {
-        delete global.window;
-    });
-
-    t.test('returns first segment for no-translations scheme', () => {
-        setWindowLocation('https://example.com/docs/v1.0/index.html');
-
-        const folder = docsVersionMenu._getCurrentVersionFolderForScheme(
-            'no-translations',
-            'https://example.com/docs'
-        );
-
-        assert.equal(folder, 'v1.0');
-    });
-
-    t.test('returns second segment for translations scheme', () => {
-        setWindowLocation('https://example.com/docs/en/v1.0/index.html');
-
-        const folder = docsVersionMenu._getCurrentVersionFolderForScheme(
-            'translations',
-            'https://example.com/docs'
-        );
-
-        assert.equal(folder, 'v1.0');
-    });
-});
 
 test('_buildUrl', (t) => {
     t.test('builds a no-translations URL with a path', () => {

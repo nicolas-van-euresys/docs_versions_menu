@@ -85,30 +85,18 @@
   /**
    * Returns the current version folder.
    *
-   * For "no-translations" URL scheme, the folder is the first path segment
-   * after the root URL. This is also the value returned when url_version_scheme
-   * is not specified (backward-compatible default).
+   * For "no-translations" URL scheme (the default), the folder is the first
+   * path segment after the root URL. For "translations" scheme, it is the
+   * second segment (the first being the language code).
    * @param {string} rootUrl The root url.
+   * @param {string} [urlVersionScheme="no-translations"] The URL scheme in use.
    * @returns The current version folder.
    */
-  docsVersionMenu.getCurrentVersionFolder = function (rootUrl) {
-    return docsVersionMenu._pathParts(rootUrl)[0];
-  }
-
-  /**
-   * Returns the current version folder for a given URL scheme.
-   *
-   * For "translations" scheme the folder is the second segment (after the
-   * language). For "no-translations" it falls back to getCurrentVersionFolder.
-   * @param {string} urlVersionScheme "no-translations" or "translations"
-   * @param {string} rootUrl The root url.
-   * @returns The current version folder.
-   */
-  docsVersionMenu._getCurrentVersionFolderForScheme = function (urlVersionScheme, rootUrl) {
+  docsVersionMenu.getCurrentVersionFolder = function (rootUrl, urlVersionScheme) {
     if (urlVersionScheme === 'translations') {
       return docsVersionMenu._pathParts(rootUrl)[1];
     }
-    return docsVersionMenu.getCurrentVersionFolder(rootUrl);
+    return docsVersionMenu._pathParts(rootUrl)[0];
   }
 
   /**
@@ -220,7 +208,7 @@
     const url_version_scheme = version_data["url-version-scheme"] || "no-translations";
     const folders = version_data["versions"];
     const current_url = document.URL;
-    const current_folder = docsVersionMenu._getCurrentVersionFolderForScheme(url_version_scheme, rootUrl);
+    const current_folder = docsVersionMenu.getCurrentVersionFolder(rootUrl, url_version_scheme);
     if (!current_folder || !(current_folder in version_data["labels"])) return;
     const current_version = version_data["labels"][current_folder];
     const path_parts = docsVersionMenu._pathParts(rootUrl);
