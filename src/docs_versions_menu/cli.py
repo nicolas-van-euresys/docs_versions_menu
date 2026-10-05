@@ -12,7 +12,9 @@ from collections import OrderedDict
 from pathlib import Path
 
 import click
+import fsspec
 import jinja2
+from fsspec import AbstractFileSystem
 
 from .url_scheme import UrlVersionScheme
 from .version_data import get_version_data
@@ -20,21 +22,34 @@ from .version_data import get_version_data
 __all__ = []
 
 
-def write_versions_json(version_data, outfile, quiet=False):
+def _git_add(fs: AbstractFileSystem, path: str):
+    if 'file' in fs.protocol:
+        subprocess.run(['git', 'add', path], check=False)
+
+
+def write_versions_json(
+    fs: AbstractFileSystem,
+    version_data,
+    outfile,
+    quiet=False,
+):
     """Write the versions data to a json file and add it to the git index.
 
     This json file will be processed by the javascript that generates the
     version-selector.
     """
-    with open(outfile, 'w') as out_fh:
+    with fs.open(outfile, 'w') as out_fh:
         json.dump(version_data, out_fh)
     if not quiet:
         print("version_data =", json.dumps(version_data, indent=2))
-    subprocess.run(['git', 'add', outfile], check=False)
+    _git_add(fs, outfile)
 
 
 def _write_index_html(
-    url_version_scheme: UrlVersionScheme, version_data, default_language='en'
+    fs: AbstractFileSystem,
+    url_version_scheme: UrlVersionScheme,
+    version_data,
+    default_language='en',
 ):
     """Write index.html files that redirect to the best available version.
 
@@ -56,9 +71,9 @@ def _write_index_html(
 
     match url_version_scheme:
         case UrlVersionScheme.NO_TRANSLATIONS:
-            with open("index.html", "w") as out_fh:
+            with fs.open("index.html", "w") as out_fh:
                 out_fh.write(template.render(dict(version_data=version_data)))
-            subprocess.run(['git', 'add', 'index.html'], check=False)
+            _git_add(fs, 'index.html')
 
         case UrlVersionScheme.TRANSLATIONS:
             folders: list[str] = version_data['folders']
@@ -92,13 +107,12 @@ def _write_index_html(
                 if not lang_version_data["default-branch"] in folders_in_lang:
                     del lang_version_data["default-branch"]
 
-                with open(f"{lang}/index.html", "w") as out_fh:
+                lang_index_path = f"{lang}/index.html"
+                with fs.open(lang_index_path, "w") as out_fh:
                     out_fh.write(
                         template.render(dict(version_data=lang_version_data))
                     )
-                subprocess.run(
-                    ['git', 'add', f"{lang}/index.html"], check=False
-                )
+                _git_add(fs, lang_index_path)
 
             # Main index.html file
             template_file_m = Path("index_translations_main.html_t")
@@ -119,28 +133,27 @@ def _write_index_html(
             template_m_str = template_file_m.read_text()
             template_m = jinja2.Environment().from_string(template_m_str)
 
-            with open("index.html", "w") as out_fh:
+            with fs.open("index.html", "w") as out_fh:
                 out_fh.write(
                     template_m.render(dict(version_data=version_data))
                 )
-            subprocess.run(['git', 'add', 'index.html'], check=False)
+            _git_add(fs, 'index.html')
 
         case _:
             raise NotImplementedError()
 
 
-def _write_versions_py():
+def _write_versions_py(fs: AbstractFileSystem):
     """Write a versions.py script for re-generating versions.json."""
     logger = logging.getLogger(__name__)
     logger.debug("Write versions.py")
     infile = Path(__file__).parent / '_script' / 'versions.py'
-    outfile = Path('versions.py')
     docs_env = {
         key: val
         for (key, val) in os.environ.items()
         if key.startswith("DOCS_VERSIONS_MENU_")
     }
-    with infile.open() as in_fh, outfile.open('w') as out_fh:
+    with infile.open() as in_fh, fs.open('versions.py', 'w') as out_fh:
         for line in in_fh:
             if docs_env and line.startswith('DOCS_VERSIONS_ENV_VARS = {}'):
                 line = "DOCS_VERSIONS_ENV_VARS = %s\n"
@@ -150,23 +163,37 @@ def _write_versions_py():
                 out_fh.write("}\n")
             else:
                 out_fh.write(line)
-    subprocess.run(['git', 'add', 'versions.py'], check=False)
+    _git_add(fs, 'versions.py')
 
 
-def _ensure_no_jekyll():
+def _ensure_no_jekyll(fs: AbstractFileSystem):
     """Create a .nojekyll file.
 
     This prevents Github from messing with folders that start with an
     underscore.
     """
     logger = logging.getLogger(__name__)
-    nojekyll = Path('.nojekyll')
-    if nojekyll.is_file():
+    nojekyll = '.nojekyll'
+    if fs.isfile(nojekyll):
         logger.debug("%s exists", nojekyll)
     else:
         logger.debug("creating %s", nojekyll)
-        nojekyll.touch()
-        subprocess.run(['git', 'add', str(nojekyll)], check=False)
+        fs.touch(nojekyll)
+        _git_add(fs, nojekyll)
+
+
+def _parse_fs_option(s: str) -> tuple[str, object]:
+    """Parse a KEY=VALUE option for fsspec.
+
+    Consistent with fsspec conventions (see
+    https://filesystem-spec.readthedocs.io/en/latest/features.html#configuration)
+    regarding configuration and env var parsing.
+    """
+    key, raw = s.split("=", 1)
+    try:
+        return key, json.loads(raw)
+    except json.JSONDecodeError:
+        return key, raw
 
 
 class _MultipleTuple(click.Tuple):
@@ -398,6 +425,29 @@ class DoctrLegacyCommand(click.Command):
     show_default=True,
     show_envvar=True,
 )
+@click.option(
+    '--fs-protocol',
+    default='file',
+    metavar='PROTOCOL',
+    help=(
+        'The fsspec protocol to use for filesystem access. '
+        'Defaults to "file" for the local filesystem. '
+        'See the fsspec documentation for available protocols.'
+    ),
+    show_default=True,
+    show_envvar=True,
+)
+@click.option(
+    '--fs-option',
+    multiple=True,
+    metavar='KEY=VALUE',
+    help=(
+        'An option to pass to the fsspec filesystem constructor, in the '
+        'form KEY=VALUE. Values are parsed as JSON where possible, '
+        'falling back to plain strings. '
+        'This option may be given multiple times.'
+    ),
+)
 def main(
     debug,
     outfile,
@@ -414,6 +464,8 @@ def main(
     no_downloads_file,
     suffix_latest,
     default_language,
+    fs_protocol,
+    fs_option,
 ):
     """Generate versions json file in OUTFILE.
 
@@ -442,7 +494,10 @@ def main(
     logger.debug("cwd: %s", Path.cwd())
     logger.debug("ENV: %s", os.environ)
     logger.debug("Gather versions info")
-    if Path('doctr-versions-menu.conf').is_file():
+    fs = fsspec.filesystem(
+        fs_protocol, **dict(_parse_fs_option(opt) for opt in fs_option)
+    )
+    if fs.isfile('doctr-versions-menu.conf'):
         click.echo(
             "ERROR: Found legacy doctr-versions-menu.conf file. Config file "
             "settings are no longer supported. Use environment variables "
@@ -453,6 +508,7 @@ def main(
     warnings = OrderedDict([(name.lower(), spec) for (name, spec) in warning])
     url_version_scheme = UrlVersionScheme.parse(url_version_scheme)
     version_data = get_version_data(
+        fs=fs,
         url_version_scheme=url_version_scheme,
         downloads_file=(downloads_file or None),  # False (in config) → None
         default_branch_spec=default_branch,
@@ -465,14 +521,15 @@ def main(
     )
     if write_index_html:
         _write_index_html(
+            fs,
             url_version_scheme=url_version_scheme,
             version_data=version_data,
             default_language=default_language,
         )
     if write_versions_py:
-        _write_versions_py()
+        _write_versions_py(fs)
     if ensure_no_jekyll:
-        _ensure_no_jekyll()
+        _ensure_no_jekyll(fs)
     logger.info("Write versions.json")
-    write_versions_json(version_data, outfile=outfile)
+    write_versions_json(fs, version_data, outfile=outfile)
     logger.debug("End of docs-versions-menu")

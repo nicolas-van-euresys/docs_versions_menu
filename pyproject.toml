@@ -37,6 +37,7 @@ classifiers = [
 requires-python = ">=3.10"
 dependencies = [
     "click >= 6.7",
+    "fsspec >= 2026.9.0",
     "jinja2 >= 3.0",
     "packaging >= 17.0",
     "pyparsing >= 3.1",

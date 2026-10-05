@@ -37,6 +37,14 @@ Unreleased
     `translations`.
   * The versions menu JavaScript now includes a language switcher ("Translations" section) when url
     version scheme is set to `translations`.
+* Added ``fsspec`` as a dependency; all filesystem interactions in the CLI now
+  go through ``fsspec``, enabling support for remote or custom filesystem
+  backends. ``git add`` staging is automatically skipped when not using the
+  local filesystem.
+* Added ``--fs-protocol`` option to select the fsspec filesystem protocol
+  (default: ``file`` for the local filesystem).
+* Added ``--fs-option`` option (repeatable) to pass keyword arguments to
+  the fsspec filesystem constructor.
 
 
 0.6.0 (2026-06-30)

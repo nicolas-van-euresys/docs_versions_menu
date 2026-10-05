@@ -233,6 +233,88 @@ the environment variables in a `Github Actions`_ workflow_:
 
     DOCS_VERSIONS_MENU_WARNING: 'post: <post-relases>; prereleased:'
 
+.. _custom-filesystem:
+
+Custom filesystem backends
+--------------------------
+
+By default, ``docs-versions-menu`` reads and writes all files through the
+local filesystem. The :option:`--fs-protocol` and :option:`--fs-option`
+options expose the underlying `fsspec`_ library, allowing the CLI to operate
+directly on any filesystem that fsspec supports — remote object stores, SFTP
+servers, memory filesystems for testing, and more.
+
+.. code-block:: shell
+
+    docs-versions-menu --fs-protocol <PROTOCOL> [--fs-option KEY=VALUE ...]
+
+The ``<PROTOCOL>`` string is passed directly to `fsspec.filesystem()`_.
+``--fs-option`` may be given multiple times; each value must have the form
+``KEY=VALUE``, where the value is parsed as JSON (so booleans, integers, and
+nested objects are accepted natively) and falls back to a plain string when
+JSON parsing fails.
+
+Refer to the `fsspec built-in implementations`_ page for the protocols that
+ship with fsspec itself, and to `fsspec known implementations`_ for the
+broader ecosystem of third-party backends (S3, GCS, Azure, SFTP, …). Most
+third-party backends require installing an additional package; fsspec provides
+convenience extras for the most common ones (e.g. ``fsspec[s3]`` for S3,
+``fsspec[sftp]`` for SFTP).
+
+.. note::
+
+    ``--fs-protocol`` can also be set via the ``DOCS_VERSIONS_MENU_FS_PROTOCOL``
+    environment variable (like all other options). For ``--fs-option``, use
+    `fsspec's own configuration mechanism`_ instead: fsspec reads
+    ``FSSPEC_<PROTOCOL>_<KEY>`` environment variables (and config files)
+    directly, so filesystem credentials and options can be supplied that way
+    without involving the CLI at all.
+
+.. _fsspec's own configuration mechanism: https://filesystem-spec.readthedocs.io/en/latest/features.html#configuration
+
+**Example — Amazon S3**
+
+Writing output files to an S3 bucket (requires ``fsspec[s3]``, which installs
+``s3fs``):
+
+.. code-block:: shell
+
+    DOCS_VERSIONS_MENU_FS_PROTOCOL=s3 \
+    docs-versions-menu \
+        --fs-option key=AKIAIOSFODNN7EXAMPLE \
+        --fs-option secret=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY \
+        --fs-option 'client_kwargs={"region_name":"eu-west-1"}'
+
+**Example — SFTP**
+
+Writing output files to a remote server over SFTP (requires ``fsspec[sftp]``,
+which installs ``paramiko``):
+
+.. code-block:: shell
+
+    docs-versions-menu \
+        --fs-protocol sftp \
+        --fs-option host=docs.example.com \
+        --fs-option username=deploy
+
+.. note::
+
+    Two things always remain local, regardless of the chosen filesystem
+    backend:
+
+    * **Template overrides** — ``index.html_t`` and
+      ``index_translations_main.html_t`` are looked up in the current working
+      directory using the local filesystem, just like any other file you pass
+      to the CLI at invocation time.
+    * **git staging** — ``git add`` calls are silently skipped when the
+      selected protocol is anything other than ``file``. The remote filesystem
+      has no git working tree to stage into.
+
+.. _fsspec: https://filesystem-spec.readthedocs.io/en/latest/
+.. _fsspec.filesystem(): https://filesystem-spec.readthedocs.io/en/latest/api.html#fsspec.filesystem
+.. _fsspec built-in implementations: https://filesystem-spec.readthedocs.io/en/latest/api.html#built-in-implementations
+.. _fsspec known implementations: https://filesystem-spec.readthedocs.io/en/latest/api.html#other-known-implementations
+
 .. _Github Actions: https://github.com/features/actions
 .. _Github Pages: https://pages.github.com
 .. _workflow: https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions
