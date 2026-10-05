@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 
 import jinja2
+from fsspec import AbstractFileSystem
 
 from .folder_spec import resolve_folder_spec
 from .groups import get_groups
@@ -13,6 +14,7 @@ from .url_scheme import UrlVersionScheme
 
 def get_version_data(
     *,
+    fs: AbstractFileSystem,
     url_version_scheme: UrlVersionScheme,
     suffix_latest,
     default_branch_spec,
@@ -26,7 +28,7 @@ def get_version_data(
     """Get the versions data, to be serialized to json."""
     logger = logging.getLogger(__name__)
 
-    folders_and_langs = _collect_folders_and_languages(url_version_scheme)
+    folders_and_langs = _collect_folders_and_languages(fs, url_version_scheme)
     folders = list(folders_and_langs.keys())
 
     default_branches = resolve_folder_spec(
@@ -107,6 +109,7 @@ def get_version_data(
     else:
         version_data['downloads'] = {
             folder: _find_downloads(
+                fs,
                 _downloads_path(folder, url_version_scheme, default_language),
                 downloads_file,
             )
@@ -123,6 +126,7 @@ def get_version_data(
 
 
 def _collect_folders_and_languages(
+    fs: AbstractFileSystem,
     url_version_scheme: UrlVersionScheme,
 ) -> dict[str, set[str]]:
     """Collect version folders and language availability.
@@ -132,32 +136,35 @@ def _collect_folders_and_languages(
     """
     match url_version_scheme:
         case UrlVersionScheme.NO_TRANSLATIONS:
+            all_paths = fs.ls('.', detail=False)
             folders = sorted(
-                str(f)
-                for f in Path().iterdir()
-                if f.is_dir()
-                and not str(f).startswith('.')
-                and not str(f).startswith('_')
+                Path(p).name
+                for p in all_paths
+                if fs.isdir(p)
+                and not Path(p).name.startswith('.')
+                and not Path(p).name.startswith('_')
             )
             return {f: set() for f in folders}
 
         case UrlVersionScheme.TRANSLATIONS:
+            all_paths = fs.ls('.', detail=False)
             languages = sorted(
-                str(f)
-                for f in Path().iterdir()
-                if f.is_dir()
-                and not str(f).startswith('.')
-                and not str(f).startswith('_')
+                Path(p).name
+                for p in all_paths
+                if fs.isdir(p)
+                and not Path(p).name.startswith('.')
+                and not Path(p).name.startswith('_')
             )
 
             lang_versions: dict[str, set[str]] = {}
             for lang in languages:
+                lang_paths = fs.ls(lang, detail=False)
                 versions = {
-                    f.name
-                    for f in Path(lang).iterdir()
-                    if f.is_dir()
-                    and not f.name.startswith('.')
-                    and not f.name.startswith('_')
+                    Path(p).name
+                    for p in lang_paths
+                    if fs.isdir(p)
+                    and not Path(p).name.startswith('.')
+                    and not Path(p).name.startswith('_')
                 }
                 lang_versions[lang] = versions
 
@@ -188,7 +195,11 @@ def _downloads_path(
             )
 
 
-def _find_downloads(folder, downloads_file):
+def _find_downloads(
+    fs: AbstractFileSystem,
+    folder,
+    downloads_file,
+):
     """Find artifact links in downloads_file file.
 
     The `downloads_file` should be created during the build procedure (on
@@ -202,10 +213,10 @@ def _find_downloads(folder, downloads_file):
     downloads = []
     rx_line = re.compile(r'^\[(?P<label>.*)\]:\s*(?P<url>.*)$')
     rx_url = re.compile(r'^(\w+:/)?/')  # /... or http://...
+    downloads_path = str(Path(folder) / downloads_file)
     try:
-        downloads_file = Path(folder) / downloads_file
-        with downloads_file.open() as in_fh:
-            logger.debug("Processing downloads_file %s", downloads_file)
+        with fs.open(downloads_path, 'r') as in_fh:
+            logger.debug("Processing downloads_file %s", downloads_path)
             for line in in_fh:
                 match = rx_line.match(line)
                 if match:
@@ -215,7 +226,7 @@ def _find_downloads(folder, downloads_file):
                     logger.warning(
                         "Invalid line %r in %s: does not match '[label]: url'",
                         line.strip(),
-                        downloads_file,
+                        downloads_path,
                     )
                     url = line.strip()
                     label = url.split(".")[-1].lower()
@@ -232,5 +243,5 @@ def _find_downloads(folder, downloads_file):
                 )
                 downloads.append((label, url))
     except IOError:
-        logger.warning("folder '%s' contains no %s", folder, downloads_file)
+        logger.warning("folder '%s' contains no %s", folder, downloads_path)
     return downloads

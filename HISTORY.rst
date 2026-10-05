@@ -37,6 +37,8 @@ Unreleased
     `translations`.
   * The versions menu JavaScript now includes a language switcher ("Translations" section) when url
     version scheme is set to `translations`.
+* Added ``fsspec`` as a dependency; filesystem interactions in the CLI now go
+  through ``fsspec``, enabling future support for non-local filesystems.
 
 
 0.6.0 (2026-06-30)
