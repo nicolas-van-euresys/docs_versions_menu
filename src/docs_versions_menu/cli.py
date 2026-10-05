@@ -182,6 +182,20 @@ def _ensure_no_jekyll(fs: AbstractFileSystem):
         _git_add(fs, nojekyll)
 
 
+def _parse_fs_option(s: str) -> tuple[str, object]:
+    """Parse a KEY=VALUE option for fsspec.
+
+    Consistent with fsspec conventions (see
+    https://filesystem-spec.readthedocs.io/en/latest/features.html#configuration)
+    regarding configuration and env var parsing.
+    """
+    key, raw = s.split("=", 1)
+    try:
+        return key, json.loads(raw)
+    except json.JSONDecodeError:
+        return key, raw
+
+
 class _MultipleTuple(click.Tuple):
     def split_envvar_value(self, rv):
         return [
@@ -411,6 +425,29 @@ class DoctrLegacyCommand(click.Command):
     show_default=True,
     show_envvar=True,
 )
+@click.option(
+    '--fs-protocol',
+    default='file',
+    metavar='PROTOCOL',
+    help=(
+        'The fsspec protocol to use for filesystem access. '
+        'Defaults to "file" for the local filesystem. '
+        'See the fsspec documentation for available protocols.'
+    ),
+    show_default=True,
+    show_envvar=True,
+)
+@click.option(
+    '--fs-option',
+    multiple=True,
+    metavar='KEY=VALUE',
+    help=(
+        'An option to pass to the fsspec filesystem constructor, in the '
+        'form KEY=VALUE. Values are parsed as JSON where possible, '
+        'falling back to plain strings. '
+        'This option may be given multiple times.'
+    ),
+)
 def main(
     debug,
     outfile,
@@ -427,6 +464,8 @@ def main(
     no_downloads_file,
     suffix_latest,
     default_language,
+    fs_protocol,
+    fs_option,
 ):
     """Generate versions json file in OUTFILE.
 
@@ -455,7 +494,9 @@ def main(
     logger.debug("cwd: %s", Path.cwd())
     logger.debug("ENV: %s", os.environ)
     logger.debug("Gather versions info")
-    fs = fsspec.filesystem('file')
+    fs = fsspec.filesystem(
+        fs_protocol, **dict(_parse_fs_option(opt) for opt in fs_option)
+    )
     if fs.isfile('doctr-versions-menu.conf'):
         click.echo(
             "ERROR: Found legacy doctr-versions-menu.conf file. Config file "
