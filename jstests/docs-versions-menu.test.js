@@ -178,7 +178,7 @@ test('getCurrentVersionFolder', (t) => {
         delete global.window;
     });
 
-    t.test('extracts the folder right after the root URL (no-translations, default)', () => {
+    t.test('extracts the folder right after the root URL', () => {
         setWindowLocation(
             'https://example.com/docs/v1.0/guide/intro.html'
         );
@@ -191,7 +191,7 @@ test('getCurrentVersionFolder', (t) => {
     });
 
     t.test(
-        'also works when the root URL is the origin itself (no-translations, default)',
+        'also works when the root URL is the origin itself',
         () => {
             setWindowLocation('https://example.com/v1.0/index.html');
 
@@ -539,21 +539,6 @@ test('addVersionsMenu', async (t) => {
     );
 });
 
-test('_pathParts', (t) => {
-    t.afterEach(() => {
-        delete global.window;
-    });
-
-    t.test('splits path segments after the root URL', () => {
-        setWindowLocation('https://example.com/docs/en/v1.0/guide/intro.html');
-
-        const parts = docsVersionMenu._pathParts('https://example.com/docs');
-
-        assert.deepEqual(parts, ['en', 'v1.0', 'guide', 'intro.html']);
-    });
-});
-
-
 test('_buildUrl', (t) => {
     t.test('builds a no-translations URL with a path', () => {
         const url = docsVersionMenu._buildUrl(
@@ -602,22 +587,6 @@ test('_buildUrl', (t) => {
     });
 });
 
-test('_getCurrentLanguage', (t) => {
-    t.afterEach(() => {
-        delete global.window;
-    });
-
-    t.test('returns the first path segment after the root URL', () => {
-        setWindowLocation('https://example.com/docs/fr/v1.0/index.html');
-
-        const lang = docsVersionMenu._getCurrentLanguage(
-            'https://example.com/docs'
-        );
-
-        assert.equal(lang, 'fr');
-    });
-});
-
 test('_findFallbackLanguage', (t) => {
     const availableLanguages = {
         'v1.0': ['en', 'fr'],
@@ -655,7 +624,8 @@ test('addVersionsMenu with translations', async (t) => {
         delete global.document;
     });
 
-    // Two versions, two languages (en + fr), with fr missing for v1.0.
+    // Two versions, two languages (en + fr).
+    // v1.0 is stable and English-only; v2.0 is unreleased and has both EN + FR.
     const translationsVersionData = {
         'url-version-scheme': 'translations',
         'default-language': 'en',
@@ -671,19 +641,49 @@ test('addVersionsMenu with translations', async (t) => {
     };
 
     const scenarios = [
+        // Parallel to 'default options (collapsed badge, no GitHub link)':
+        // verifies that badge-only mode renders correctly in translations mode,
+        // including the Translations section inside the collapsed badge.
         {
-            name: 'translations menu on the current version in English',
+            name: 'default options (collapsed badge) in translations mode',
+            file: 'translations-default-options.html',
+            rootUrl: 'https://example.com/docs',
+            pageUrl: 'https://example.com/docs/en/v2.0/index.html',
+            versionData: translationsVersionData,
+            options: {},
+        },
+        // Parallel to 'expanded menu with a custom title':
+        // verifies version links use /<lang>/<version>/ URLs, the Translations
+        // section is rendered, and the unreleased warning links to EN v1.0
+        // (the only available language for v1.0).
+        {
+            name: 'expanded menu in English on v2.0 (unreleased, with language fallback for v1.0)',
             file: 'translations-en-v2.html',
             rootUrl: 'https://example.com/docs',
             pageUrl: 'https://example.com/docs/en/v2.0/index.html',
             versionData: translationsVersionData,
             options: { badgeOnly: false, menuTitle: 'Docs' },
         },
+        // French view of the same page: v1.0 version link falls back to EN
+        // (FR not available for v1.0), FR is the current language in the
+        // Translations section, and the warning also links to EN v1.0.
         {
-            name: 'translations menu on the current version in French',
+            name: 'expanded menu in French on v2.0 (unreleased, French not available for v1.0)',
             file: 'translations-fr-v2.html',
             rootUrl: 'https://example.com/docs',
             pageUrl: 'https://example.com/docs/fr/v2.0/index.html',
+            versionData: translationsVersionData,
+            options: { badgeOnly: false, menuTitle: 'Docs' },
+        },
+        // Stable version with a single available language: verifies that the
+        // Translations section reflects only the languages available for the
+        // current version (EN only for v1.0), and that the v2.0 version link
+        // goes to the English edition (defaulting to 'en').
+        {
+            name: 'expanded menu in English on v1.0 (stable, single language)',
+            file: 'translations-en-v1.html',
+            rootUrl: 'https://example.com/docs',
+            pageUrl: 'https://example.com/docs/en/v1.0/index.html',
             versionData: translationsVersionData,
             options: { badgeOnly: false, menuTitle: 'Docs' },
         },
