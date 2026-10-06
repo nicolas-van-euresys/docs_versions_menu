@@ -41,6 +41,8 @@ Unreleased
   go through ``fsspec``, enabling support for remote or custom filesystem
   backends. ``git add`` staging is automatically skipped when not using the
   local filesystem.
+* Added ``--root-path`` option to specify the base path on the
+  filesystem (defaults to ``"."`` for backward compatibility).
 * Added ``--fs-protocol`` option to select the fsspec filesystem protocol
   (default: ``file`` for the local filesystem).
 * Added ``--fs-option`` option (repeatable) to pass keyword arguments to

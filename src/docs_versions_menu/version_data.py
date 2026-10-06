@@ -2,10 +2,10 @@
 
 import logging
 import re
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 import jinja2
-from fsspec import AbstractFileSystem
+from fsspec.implementations.dirfs import DirFileSystem
 
 from .folder_spec import resolve_folder_spec
 from .groups import get_groups
@@ -14,7 +14,7 @@ from .url_scheme import UrlVersionScheme
 
 def get_version_data(
     *,
-    fs: AbstractFileSystem,
+    fs: DirFileSystem,
     url_version_scheme: UrlVersionScheme,
     suffix_latest,
     default_branch_spec,
@@ -126,7 +126,7 @@ def get_version_data(
 
 
 def _collect_folders_and_languages(
-    fs: AbstractFileSystem,
+    fs: DirFileSystem,
     url_version_scheme: UrlVersionScheme,
 ) -> dict[str, set[str]]:
     """Collect version folders and language availability.
@@ -188,7 +188,7 @@ def _downloads_path(
         case UrlVersionScheme.NO_TRANSLATIONS:
             return str(folder)
         case UrlVersionScheme.TRANSLATIONS:
-            return str(Path(default_language) / folder)
+            return str(PurePosixPath(default_language) / folder)
         case _:
             raise NotImplementedError(
                 f"Unsupported URL version scheme: {url_version_scheme}"
@@ -196,7 +196,7 @@ def _downloads_path(
 
 
 def _find_downloads(
-    fs: AbstractFileSystem,
+    fs: DirFileSystem,
     folder,
     downloads_file,
 ):
@@ -213,7 +213,7 @@ def _find_downloads(
     downloads = []
     rx_line = re.compile(r'^\[(?P<label>.*)\]:\s*(?P<url>.*)$')
     rx_url = re.compile(r'^(\w+:/)?/')  # /... or http://...
-    downloads_path = str(Path(folder) / downloads_file)
+    downloads_path = str(PurePosixPath(folder) / downloads_file)
     try:
         with fs.open(downloads_path, 'r') as in_fh:
             logger.debug("Processing downloads_file %s", downloads_path)
