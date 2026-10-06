@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 
 import jinja2
-from fsspec import AbstractFileSystem
+from fsspec.implementations.dirfs import DirFileSystem
 
 from .folder_spec import resolve_folder_spec
 from .groups import get_groups
@@ -14,7 +14,7 @@ from .url_scheme import UrlVersionScheme
 
 def get_version_data(
     *,
-    fs: AbstractFileSystem,
+    fs: DirFileSystem,
     url_version_scheme: UrlVersionScheme,
     suffix_latest,
     default_branch_spec,
@@ -126,7 +126,7 @@ def get_version_data(
 
 
 def _collect_folders_and_languages(
-    fs: AbstractFileSystem,
+    fs: DirFileSystem,
     url_version_scheme: UrlVersionScheme,
 ) -> dict[str, set[str]]:
     """Collect version folders and language availability.
@@ -196,7 +196,7 @@ def _downloads_path(
 
 
 def _find_downloads(
-    fs: AbstractFileSystem,
+    fs: DirFileSystem,
     folder,
     downloads_file,
 ):

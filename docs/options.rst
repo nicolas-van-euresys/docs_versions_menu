@@ -246,9 +246,13 @@ servers, memory filesystems for testing, and more.
 
 .. code-block:: shell
 
-    docs-versions-menu --fs-protocol <PROTOCOL> [--fs-option KEY=VALUE ...]
+    docs-versions-menu --fs-protocol <PROTOCOL> --root-path <PATH> [--fs-option KEY=VALUE ...]
 
 The ``<PROTOCOL>`` string is passed directly to `fsspec.filesystem()`_.
+``--root-path`` sets the base path on the remote filesystem where
+``docs-versions-menu`` reads and writes files (equivalent to the current
+working directory on a local deployment); it defaults to ``"."`` so
+existing local-filesystem usage is unchanged.
 ``--fs-option`` may be given multiple times; each value must have the form
 ``KEY=VALUE``, where the value is parsed as JSON (so booleans, integers, and
 nested objects are accepted natively) and falls back to a plain string when
@@ -281,6 +285,7 @@ Writing output files to an S3 bucket (requires ``fsspec[s3]``, which installs
 
     DOCS_VERSIONS_MENU_FS_PROTOCOL=s3 \
     docs-versions-menu \
+        --root-path my-docs-bucket/webroot/ \
         --fs-option key=AKIAIOSFODNN7EXAMPLE \
         --fs-option secret=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY \
         --fs-option 'client_kwargs={"region_name":"eu-west-1"}'
@@ -294,6 +299,7 @@ which installs ``paramiko``):
 
     docs-versions-menu \
         --fs-protocol sftp \
+        --root-path /var/www/docs/ \
         --fs-option host=docs.example.com \
         --fs-option username=deploy
 

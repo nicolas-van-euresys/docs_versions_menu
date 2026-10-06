@@ -14,7 +14,7 @@ from pathlib import Path
 import click
 import fsspec
 import jinja2
-from fsspec import AbstractFileSystem
+from fsspec.implementations.dirfs import DirFileSystem
 
 from .url_scheme import UrlVersionScheme
 from .version_data import get_version_data
@@ -22,13 +22,13 @@ from .version_data import get_version_data
 __all__ = []
 
 
-def _git_add(fs: AbstractFileSystem, path: str):
-    if 'file' in fs.protocol:
-        subprocess.run(['git', 'add', path], check=False)
+def _git_add(fs: DirFileSystem, path: str):
+    if 'file' in fs.fs.protocol:
+        subprocess.run(['git', 'add', str(Path(fs.path) / path)], check=False)
 
 
 def write_versions_json(
-    fs: AbstractFileSystem,
+    fs: DirFileSystem,
     version_data,
     outfile,
     quiet=False,
@@ -46,7 +46,7 @@ def write_versions_json(
 
 
 def _write_index_html(
-    fs: AbstractFileSystem,
+    fs: DirFileSystem,
     url_version_scheme: UrlVersionScheme,
     version_data,
     default_language='en',
@@ -143,7 +143,7 @@ def _write_index_html(
             raise NotImplementedError()
 
 
-def _write_versions_py(fs: AbstractFileSystem):
+def _write_versions_py(fs: DirFileSystem):
     """Write a versions.py script for re-generating versions.json."""
     logger = logging.getLogger(__name__)
     logger.debug("Write versions.py")
@@ -166,7 +166,7 @@ def _write_versions_py(fs: AbstractFileSystem):
     _git_add(fs, 'versions.py')
 
 
-def _ensure_no_jekyll(fs: AbstractFileSystem):
+def _ensure_no_jekyll(fs: DirFileSystem):
     """Create a .nojekyll file.
 
     This prevents Github from messing with folders that start with an
@@ -426,6 +426,20 @@ class DoctrLegacyCommand(click.Command):
     show_envvar=True,
 )
 @click.option(
+    '--root-path',
+    default='.',
+    metavar='PATH',
+    help=(
+        'The root path on the filesystem where docs-versions-menu reads and '
+        'writes files. For the local filesystem this defaults to the current '
+        'working directory. For remote filesystems set this to the base path '
+        'on the remote filesystem, e.g. "my-bucket/docs/" for S3 or '
+        '"/var/www/docs/" for SFTP.'
+    ),
+    show_default=True,
+    show_envvar=True,
+)
+@click.option(
     '--fs-protocol',
     default='file',
     metavar='PROTOCOL',
@@ -464,6 +478,7 @@ def main(
     no_downloads_file,
     suffix_latest,
     default_language,
+    root_path,
     fs_protocol,
     fs_option,
 ):
@@ -494,8 +509,12 @@ def main(
     logger.debug("cwd: %s", Path.cwd())
     logger.debug("ENV: %s", os.environ)
     logger.debug("Gather versions info")
-    fs = fsspec.filesystem(
-        fs_protocol, **dict(_parse_fs_option(opt) for opt in fs_option)
+    fs = DirFileSystem(
+        path=root_path,
+        fs=fsspec.filesystem(
+            fs_protocol, **dict(_parse_fs_option(opt) for opt in fs_option)
+        ),
+        skip_instance_cache=True,
     )
     if fs.isfile('doctr-versions-menu.conf'):
         click.echo(
