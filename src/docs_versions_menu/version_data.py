@@ -2,7 +2,7 @@
 
 import logging
 import re
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 import jinja2
 from fsspec.implementations.dirfs import DirFileSystem
@@ -188,7 +188,7 @@ def _downloads_path(
         case UrlVersionScheme.NO_TRANSLATIONS:
             return str(folder)
         case UrlVersionScheme.TRANSLATIONS:
-            return str(Path(default_language) / folder)
+            return str(PurePosixPath(default_language) / folder)
         case _:
             raise NotImplementedError(
                 f"Unsupported URL version scheme: {url_version_scheme}"
@@ -213,7 +213,7 @@ def _find_downloads(
     downloads = []
     rx_line = re.compile(r'^\[(?P<label>.*)\]:\s*(?P<url>.*)$')
     rx_url = re.compile(r'^(\w+:/)?/')  # /... or http://...
-    downloads_path = str(Path(folder) / downloads_file)
+    downloads_path = str(PurePosixPath(folder) / downloads_file)
     try:
         with fs.open(downloads_path, 'r') as in_fh:
             logger.debug("Processing downloads_file %s", downloads_path)
