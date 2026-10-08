@@ -136,7 +136,7 @@ def _collect_folders_and_languages(
     """
     match url_version_scheme:
         case UrlVersionScheme.NO_TRANSLATIONS:
-            all_paths = fs.ls('.', detail=False)
+            all_paths = fs.ls('', detail=False)
             folders = sorted(
                 Path(p).name
                 for p in all_paths
@@ -147,7 +147,7 @@ def _collect_folders_and_languages(
             return {f: set() for f in folders}
 
         case UrlVersionScheme.TRANSLATIONS:
-            all_paths = fs.ls('.', detail=False)
+            all_paths = fs.ls('', detail=False)
             languages = sorted(
                 Path(p).name
                 for p in all_paths

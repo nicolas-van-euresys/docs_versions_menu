@@ -38,7 +38,7 @@ def write_versions_json(
     This json file will be processed by the javascript that generates the
     version-selector.
     """
-    with fs.open(outfile, 'w') as out_fh:
+    with fs.open(outfile, 'w', ContentType='application/json') as out_fh:
         json.dump(version_data, out_fh)
     if not quiet:
         print("version_data =", json.dumps(version_data, indent=2))
@@ -71,7 +71,7 @@ def _write_index_html(
 
     match url_version_scheme:
         case UrlVersionScheme.NO_TRANSLATIONS:
-            with fs.open("index.html", "w") as out_fh:
+            with fs.open("index.html", "w", ContentType='text/html') as out_fh:
                 out_fh.write(template.render(dict(version_data=version_data)))
             _git_add(fs, 'index.html')
 
@@ -108,7 +108,9 @@ def _write_index_html(
                     del lang_version_data["default-branch"]
 
                 lang_index_path = f"{lang}/index.html"
-                with fs.open(lang_index_path, "w") as out_fh:
+                with fs.open(
+                    lang_index_path, "w", ContentType='text/html'
+                ) as out_fh:
                     out_fh.write(
                         template.render(dict(version_data=lang_version_data))
                     )
@@ -133,7 +135,7 @@ def _write_index_html(
             template_m_str = template_file_m.read_text()
             template_m = jinja2.Environment().from_string(template_m_str)
 
-            with fs.open("index.html", "w") as out_fh:
+            with fs.open("index.html", "w", ContentType='text/html') as out_fh:
                 out_fh.write(
                     template_m.render(dict(version_data=version_data))
                 )
@@ -153,7 +155,10 @@ def _write_versions_py(fs: DirFileSystem):
         for (key, val) in os.environ.items()
         if key.startswith("DOCS_VERSIONS_MENU_")
     }
-    with infile.open() as in_fh, fs.open('versions.py', 'w') as out_fh:
+    with (
+        infile.open() as in_fh,
+        fs.open('versions.py', 'w', ContentType='text/x-python') as out_fh,
+    ):
         for line in in_fh:
             if docs_env and line.startswith('DOCS_VERSIONS_ENV_VARS = {}'):
                 line = "DOCS_VERSIONS_ENV_VARS = %s\n"
@@ -178,7 +183,7 @@ def _ensure_no_jekyll(fs: DirFileSystem):
         logger.debug("%s exists", nojekyll)
     else:
         logger.debug("creating %s", nojekyll)
-        fs.touch(nojekyll)
+        fs.touch(nojekyll, ContentType='text/plain')
         _git_add(fs, nojekyll)
 
 
